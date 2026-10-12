@@ -1,0 +1,44 @@
+{
+  "name": "flexdesk-admin",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/service-flex-admin-kit/src",
+  "projectType": "application",
+  "tags": ["scope:admin", "type:app"],
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "next dev --port 3000",
+        "cwd": "packages/service-flex-admin-kit"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "next build",
+        "cwd": "packages/service-flex-admin-kit"
+      }
+    },
+    "start": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "next start",
+        "cwd": "packages/service-flex-admin-kit"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "eslint",
+        "cwd": "packages/service-flex-admin-kit"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc --noEmit",
+        "cwd": "packages/service-flex-admin-kit"
+      }
+    }
+  }
+}

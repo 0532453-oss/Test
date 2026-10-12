@@ -1,0 +1,16 @@
+node_modules
+.git
+.nx
+.cache
+*.log
+.env
+.env.local
+.env.*.local
+packages/flexdesk-server
+packages/flexdesk-admin
+packages/flexdesk-agent
+packages/flexdesk-portal
+packages/flexdesk-preview
+packages/flexdesk-core/node_modules
+packages/flexdesk-ui/node_modules
+packages/flexdesk-shared/node_modules

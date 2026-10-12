@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "cd ../.. && pnpm install && pnpm nx run flexdesk-types:build && pnpm nx run flexdesk-core:build && pnpm nx run flexdesk-preview:build",
+  "outputDirectory": "dist",
+  "installCommand": "echo 'Install handled in buildCommand'"
+}

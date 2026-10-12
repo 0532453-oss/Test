@@ -1,0 +1,1776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlexDesk — Field Service Management That Grows With You</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+  :root {
+    --bg: #ffffff;
+    --bg-alt: #fafafa;
+    --bg-dark: #09090b;
+    --fg: #09090b;
+    --fg-muted: #71717a;
+    --fg-light: #a1a1aa;
+    --border: #e4e4e7;
+    --border-light: #f4f4f5;
+    --violet: #7c3aed;
+    --violet-dark: #6d28d9;
+    --violet-light: #ede9fe;
+    --violet-glow: rgba(124,58,237,.15);
+    --green: #10b981;
+    --green-light: #ecfdf5;
+    --blue: #3b82f6;
+    --blue-light: #eff6ff;
+    --orange: #f97316;
+    --red: #ef4444;
+    --yellow: #eab308;
+    --radius: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+    --shadow: 0 4px 20px rgba(0,0,0,.06);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,.08);
+    --shadow-xl: 0 24px 60px rgba(0,0,0,.12);
+    --max-w: 1200px;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body {
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    background:var(--bg); color:var(--fg); line-height:1.6;
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    overflow-x:hidden;
+  }
+
+  /* ── Scroll Progress ── */
+  .scroll-prog { position:fixed; top:0; left:0; height:3px; background:linear-gradient(90deg,var(--violet),var(--blue)); z-index:10001; width:0; transition:width .1s; }
+
+  /* ── Noise Texture ── */
+  body::after {
+    content:''; position:fixed; inset:0; z-index:9999; pointer-events:none; opacity:.025;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ── Utilities ── */
+  .container { max-width:var(--max-w); margin:0 auto; padding:0 32px; }
+  .reveal { opacity:0; transform:translateY(30px); transition:opacity .7s ease, transform .7s ease; }
+  .reveal.visible { opacity:1; transform:none; }
+  .reveal-delay-1 { transition-delay:.1s; }
+  .reveal-delay-2 { transition-delay:.2s; }
+  .reveal-delay-3 { transition-delay:.3s; }
+  .reveal-delay-4 { transition-delay:.4s; }
+  .gradient-text {
+    background:linear-gradient(135deg, var(--violet) 0%, var(--blue) 50%, var(--violet) 100%);
+    background-size:200% 200%; -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text; animation:gradShift 6s ease infinite;
+  }
+  @keyframes gradShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+
+  .badge-sm {
+    display:inline-flex; align-items:center; gap:5px; padding:4px 12px;
+    border-radius:50px; font-size:12px; font-weight:600;
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     NAVIGATION
+     ═══════════════════════════════════════════════════════ */
+  .nav {
+    position:fixed; top:0; left:0; right:0; z-index:10000;
+    background:rgba(255,255,255,.8); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+    border-bottom:1px solid transparent; transition:all .3s;
+  }
+  .nav.scrolled { border-bottom-color:var(--border); box-shadow:var(--shadow-sm); }
+  .nav-inner {
+    max-width:var(--max-w); margin:0 auto; padding:0 32px;
+    display:flex; align-items:center; justify-content:space-between; height:64px;
+  }
+  .nav-logo { display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--fg); }
+  .nav-logo svg { width:28px; height:28px; }
+  .nav-logo span { font-size:18px; font-weight:800; letter-spacing:-.5px; }
+  .nav-links { display:flex; gap:32px; align-items:center; }
+  .nav-links a {
+    text-decoration:none; font-size:14px; font-weight:500; color:var(--fg-muted);
+    transition:color .2s; position:relative;
+  }
+  .nav-links a:hover { color:var(--fg); }
+  .nav-links a::after {
+    content:''; position:absolute; bottom:-4px; left:0; width:0; height:2px;
+    background:var(--violet); border-radius:1px; transition:width .2s;
+  }
+  .nav-links a:hover::after { width:100%; }
+  .nav-actions { display:flex; gap:12px; align-items:center; }
+  .btn-ghost {
+    padding:8px 16px; font-size:13px; font-weight:500; border:none; background:none;
+    color:var(--fg-muted); cursor:pointer; border-radius:8px; transition:all .15s;
+  }
+  .btn-ghost:hover { background:var(--border-light); color:var(--fg); }
+  .btn-primary {
+    padding:9px 20px; font-size:13px; font-weight:600; border:none;
+    background:var(--violet); color:white; border-radius:8px; cursor:pointer;
+    transition:all .2s; box-shadow:0 2px 8px var(--violet-glow);
+  }
+  .btn-primary:hover { background:var(--violet-dark); transform:translateY(-1px); box-shadow:0 4px 16px var(--violet-glow); }
+  .btn-primary:active { transform:scale(.98); }
+  .btn-primary-lg {
+    padding:14px 32px; font-size:15px; font-weight:600; border:none;
+    background:var(--violet); color:white; border-radius:var(--radius); cursor:pointer;
+    transition:all .2s; box-shadow:0 4px 20px var(--violet-glow);
+  }
+  .btn-primary-lg:hover { background:var(--violet-dark); transform:translateY(-2px); box-shadow:0 8px 30px var(--violet-glow); }
+  .btn-secondary-lg {
+    padding:14px 32px; font-size:15px; font-weight:600; border:1px solid var(--border);
+    background:white; color:var(--fg); border-radius:var(--radius); cursor:pointer;
+    transition:all .2s;
+  }
+  .btn-secondary-lg:hover { background:var(--border-light); border-color:var(--fg-light); transform:translateY(-2px); box-shadow:var(--shadow); }
+
+  /* ═══════════════════════════════════════════════════════
+     HERO
+     ═══════════════════════════════════════════════════════ */
+  .hero {
+    position:relative; padding:140px 0 80px; text-align:center; overflow:hidden;
+  }
+  .hero::before {
+    content:''; position:absolute; top:-200px; left:50%; transform:translateX(-50%);
+    width:900px; height:900px; border-radius:50%;
+    background:radial-gradient(circle, rgba(124,58,237,.06) 0%, transparent 70%);
+    pointer-events:none;
+  }
+  .hero-badge {
+    display:inline-flex; align-items:center; gap:8px;
+    padding:6px 16px; border-radius:50px; font-size:13px; font-weight:500;
+    background:var(--violet-light); color:var(--violet); margin-bottom:24px;
+    border:1px solid rgba(124,58,237,.15);
+  }
+  .hero-badge .pulse { width:8px; height:8px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+  .hero h1 {
+    font-size:clamp(40px,6vw,72px); font-weight:900; letter-spacing:-2.5px;
+    line-height:1.05; margin-bottom:20px; max-width:800px; margin-left:auto; margin-right:auto;
+  }
+  .hero p {
+    font-size:18px; color:var(--fg-muted); max-width:560px; margin:0 auto 36px;
+    line-height:1.7;
+  }
+  .hero-ctas { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-bottom:16px; }
+  .hero-note { font-size:13px; color:var(--fg-light); margin-bottom:48px; }
+  .hero-note svg { width:14px; height:14px; vertical-align:-2px; margin-right:4px; }
+
+  /* Product Mockup */
+  .hero-mockup {
+    position:relative; max-width:1000px; margin:0 auto;
+    border-radius:var(--radius-xl); overflow:hidden;
+    box-shadow:0 24px 80px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.06);
+    background:var(--bg-dark);
+  }
+  .mockup-bar {
+    display:flex; align-items:center; gap:8px; padding:12px 16px;
+    background:linear-gradient(180deg, #1a1a1e, #141416);
+    border-bottom:1px solid rgba(255,255,255,.06);
+  }
+  .mockup-dot { width:12px; height:12px; border-radius:50%; }
+  .mockup-url {
+    flex:1; text-align:center; font-size:12px; color:rgba(255,255,255,.35);
+    background:rgba(255,255,255,.06); padding:5px 16px; border-radius:6px; margin:0 40px;
+  }
+  .mockup-body {
+    display:flex; height:480px; overflow:hidden;
+  }
+  .mockup-sidebar {
+    width:220px; background:linear-gradient(180deg, #18181b, #1e1e22);
+    border-right:1px solid rgba(255,255,255,.06); padding:20px 12px;
+    display:flex; flex-direction:column; gap:4px;
+  }
+  .mockup-sidebar-logo {
+    display:flex; align-items:center; gap:8px; padding:8px 10px; margin-bottom:12px;
+    color:white; font-weight:700; font-size:14px;
+  }
+  .mockup-sidebar-logo svg { width:20px; height:20px; }
+  .mockup-nav-item {
+    display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:8px;
+    font-size:13px; color:rgba(255,255,255,.5); transition:all .15s; cursor:default;
+  }
+  .mockup-nav-item svg { width:16px; height:16px; opacity:.5; }
+  .mockup-nav-item.active { background:rgba(124,58,237,.2); color:white; }
+  .mockup-nav-item.active svg { opacity:1; color:var(--violet); }
+  .mockup-content {
+    flex:1; background:linear-gradient(180deg, #111113, #0c0c0e);
+    padding:24px; overflow:hidden;
+  }
+  .mockup-topbar {
+    display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;
+  }
+  .mockup-topbar h3 { color:white; font-size:18px; font-weight:700; }
+  .mockup-topbar-actions { display:flex; gap:8px; }
+  .mockup-topbar-btn {
+    padding:7px 14px; border-radius:8px; font-size:12px; font-weight:500;
+    border:1px solid rgba(255,255,255,.1); color:rgba(255,255,255,.6); background:transparent;
+  }
+  .mockup-topbar-btn.primary { background:var(--violet); border-color:var(--violet); color:white; }
+  .mockup-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+  .mockup-kpi {
+    padding:14px; border-radius:10px; background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.06);
+  }
+  .mockup-kpi-label { font-size:11px; color:rgba(255,255,255,.4); margin-bottom:4px; }
+  .mockup-kpi-val { font-size:20px; font-weight:800; color:white; }
+  .mockup-kpi-change { font-size:11px; margin-top:2px; }
+  .mockup-kpi-change.up { color:var(--green); }
+  .mockup-kpi-change.down { color:var(--red); }
+  .mockup-chart {
+    border-radius:10px; background:rgba(255,255,255,.03);
+    border:1px solid rgba(255,255,255,.06); padding:16px; height:200px;
+    display:flex; align-items:flex-end; gap:6px;
+  }
+  .mockup-chart-bar {
+    flex:1; border-radius:4px 4px 0 0; background:var(--violet); opacity:.7;
+    transition:opacity .2s; min-height:8px;
+  }
+  .mockup-chart-bar:hover { opacity:1; }
+
+  /* Floating Elements */
+  .hero-float {
+    position:absolute; border-radius:var(--radius); background:white;
+    box-shadow:var(--shadow-lg); padding:12px 16px; font-size:12px;
+    animation:heroFloat 4s ease-in-out infinite; pointer-events:none;
+    border:1px solid var(--border);
+  }
+  .hero-float.f1 { top:20%; left:5%; animation-delay:0s; }
+  .hero-float.f2 { top:35%; right:3%; animation-delay:-1.5s; }
+  .hero-float.f3 { bottom:25%; left:8%; animation-delay:-3s; }
+  @keyframes heroFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+
+  /* ═══════════════════════════════════════════════════════
+     SOCIAL PROOF
+     ═══════════════════════════════════════════════════════ */
+  .logos-section { padding:60px 0; border-top:1px solid var(--border-light); border-bottom:1px solid var(--border-light); background:var(--bg-alt); }
+  .logos-label { text-align:center; font-size:13px; color:var(--fg-light); font-weight:500; margin-bottom:28px; letter-spacing:.5px; text-transform:uppercase; }
+  .logos-row { display:flex; justify-content:center; align-items:center; gap:48px; flex-wrap:wrap; opacity:.45; }
+  .logos-row .logo-item { font-size:20px; font-weight:800; letter-spacing:-.5px; color:var(--fg); transition:opacity .2s; }
+  .logos-row .logo-item:hover { opacity:.8; }
+
+  /* ═══════════════════════════════════════════════════════
+     STATS BAR
+     ═══════════════════════════════════════════════════════ */
+  .stats-section { padding:80px 0; }
+  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:24px; }
+  .stat-card {
+    text-align:center; padding:32px 20px; border-radius:var(--radius-xl);
+    background:var(--bg); border:1px solid var(--border);
+    transition:transform .2s, box-shadow .2s;
+  }
+  .stat-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-lg); }
+  .stat-card .stat-num { font-size:42px; font-weight:900; letter-spacing:-1.5px; margin-bottom:4px; }
+  .stat-card .stat-label { font-size:14px; color:var(--fg-muted); font-weight:500; }
+
+  /* ═══════════════════════════════════════════════════════
+     FEATURES BENTO
+     ═══════════════════════════════════════════════════════ */
+  .features-section { padding:100px 0; }
+  .section-header { text-align:center; margin-bottom:56px; }
+  .section-header .overline {
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:13px; font-weight:600; color:var(--violet); text-transform:uppercase;
+    letter-spacing:1px; margin-bottom:16px;
+  }
+  .section-header h2 { font-size:clamp(28px,4vw,44px); font-weight:800; letter-spacing:-1.5px; line-height:1.15; margin-bottom:12px; }
+  .section-header p { font-size:17px; color:var(--fg-muted); max-width:560px; margin:0 auto; }
+
+  .bento-grid {
+    display:grid; grid-template-columns:repeat(3,1fr); grid-auto-rows:auto; gap:16px;
+  }
+  .bento-card {
+    border:1px solid var(--border); border-radius:var(--radius-xl); padding:28px;
+    background:var(--bg); overflow:hidden; position:relative;
+    transition:transform .25s, box-shadow .25s, border-color .25s;
+  }
+  .bento-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-lg); border-color:var(--violet-light); }
+  .bento-card.span-2 { grid-column:span 2; }
+  .bento-card.span-row { grid-row:span 2; }
+  .bento-icon {
+    width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+    margin-bottom:16px;
+  }
+  .bento-icon svg { width:22px; height:22px; }
+  .bento-card h3 { font-size:16px; font-weight:700; margin-bottom:6px; }
+  .bento-card p { font-size:13px; color:var(--fg-muted); line-height:1.7; }
+  .bento-visual {
+    margin-top:20px; border-radius:var(--radius); background:var(--bg-alt);
+    border:1px solid var(--border-light); overflow:hidden;
+  }
+
+  /* Feature mini demos */
+  .bento-mini-table { width:100%; font-size:12px; }
+  .bento-mini-table td { padding:8px 12px; border-bottom:1px solid var(--border-light); }
+  .bento-mini-table .mini-badge { padding:2px 8px; border-radius:50px; font-size:10px; font-weight:600; }
+  .bento-mini-chart { display:flex; align-items:flex-end; gap:4px; height:80px; padding:12px; }
+  .bento-mini-chart div { flex:1; border-radius:3px 3px 0 0; background:var(--violet); opacity:.6; }
+  .bento-mini-chart div:hover { opacity:1; }
+  .bento-mini-map { height:140px; background:linear-gradient(135deg,#eff6ff,#ede9fe); position:relative; padding:12px; }
+  .bento-map-pin { position:absolute; width:12px; height:12px; border-radius:50%; border:2px solid white; box-shadow:0 2px 6px rgba(0,0,0,.15); }
+  .bento-map-pin::after { content:''; position:absolute; inset:-4px; border-radius:50%; background:inherit; opacity:.3; animation:pulse 2s infinite; }
+
+  /* ═══════════════════════════════════════════════════════
+     HOW IT WORKS
+     ═══════════════════════════════════════════════════════ */
+  .how-section { padding:100px 0; background:var(--bg-alt); }
+  .how-steps { display:grid; grid-template-columns:repeat(3,1fr); gap:32px; position:relative; }
+  .how-steps::before {
+    content:''; position:absolute; top:48px; left:calc(16.67% + 16px); right:calc(16.67% + 16px); height:2px;
+    background:linear-gradient(90deg, var(--violet), var(--blue), var(--green));
+    border-radius:1px;
+  }
+  .how-step { text-align:center; position:relative; }
+  .how-num {
+    width:48px; height:48px; border-radius:50%; background:var(--violet);
+    color:white; font-size:18px; font-weight:800; display:flex; align-items:center; justify-content:center;
+    margin:0 auto 20px; position:relative; z-index:1;
+    box-shadow:0 4px 16px var(--violet-glow);
+  }
+  .how-step:nth-child(2) .how-num { background:var(--blue); box-shadow:0 4px 16px rgba(59,130,246,.2); }
+  .how-step:nth-child(3) .how-num { background:var(--green); box-shadow:0 4px 16px rgba(16,185,129,.2); }
+  .how-step h3 { font-size:18px; font-weight:700; margin-bottom:8px; }
+  .how-step p { font-size:14px; color:var(--fg-muted); line-height:1.7; max-width:280px; margin:0 auto; }
+
+  /* ═══════════════════════════════════════════════════════
+     TESTIMONIALS
+     ═══════════════════════════════════════════════════════ */
+  .testimonials-section { padding:100px 0; }
+  .test-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+  .test-card {
+    padding:28px; border:1px solid var(--border); border-radius:var(--radius-xl);
+    background:var(--bg); transition:transform .2s, box-shadow .2s;
+  }
+  .test-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-lg); }
+  .test-stars { display:flex; gap:2px; margin-bottom:12px; }
+  .test-stars svg { width:16px; height:16px; fill:var(--yellow); }
+  .test-quote { font-size:14px; color:var(--fg); line-height:1.7; margin-bottom:16px; font-style:italic; }
+  .test-author { display:flex; align-items:center; gap:10px; }
+  .test-avatar {
+    width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:14px; font-weight:700; color:white;
+  }
+  .test-author-info .name { font-size:13px; font-weight:600; }
+  .test-author-info .role { font-size:12px; color:var(--fg-muted); }
+
+  /* ═══════════════════════════════════════════════════════
+     INTEGRATIONS
+     ═══════════════════════════════════════════════════════ */
+  .integ-section { padding:80px 0; background:var(--bg-alt); border-top:1px solid var(--border-light); border-bottom:1px solid var(--border-light); }
+  .integ-grid { display:flex; justify-content:center; gap:20px; flex-wrap:wrap; }
+  .integ-card {
+    width:110px; height:100px; border:1px solid var(--border); border-radius:var(--radius);
+    background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:8px; transition:transform .2s, box-shadow .2s; cursor:default;
+  }
+  .integ-card:hover { transform:translateY(-4px); box-shadow:var(--shadow); }
+  .integ-card .integ-icon {
+    width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+    font-size:16px; font-weight:800; color:white;
+  }
+  .integ-card .integ-name { font-size:11px; font-weight:600; color:var(--fg-muted); }
+
+  /* ═══════════════════════════════════════════════════════
+     PRICING
+     ═══════════════════════════════════════════════════════ */
+  .pricing-section { padding:100px 0; }
+  .pricing-toggle { display:flex; justify-content:center; gap:12px; align-items:center; margin-bottom:40px; }
+  .pricing-toggle span { font-size:14px; font-weight:500; color:var(--fg-muted); transition:color .2s; }
+  .pricing-toggle span.active { color:var(--fg); font-weight:600; }
+  .pricing-pill {
+    width:48px; height:26px; border-radius:13px; background:var(--violet); cursor:pointer;
+    position:relative; transition:background .2s;
+  }
+  .pricing-pill::after {
+    content:''; position:absolute; width:20px; height:20px; border-radius:50%;
+    background:white; top:3px; left:3px; transition:transform .25s cubic-bezier(.68,-.55,.27,1.55);
+    box-shadow:0 1px 3px rgba(0,0,0,.15);
+  }
+  .pricing-pill.yearly::after { transform:translateX(22px); }
+  .pricing-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+  .price-card {
+    border:1px solid var(--border); border-radius:var(--radius-xl); padding:32px;
+    background:var(--bg); transition:transform .25s, box-shadow .25s; position:relative; overflow:hidden;
+  }
+  .price-card:hover { transform:translateY(-6px); box-shadow:var(--shadow-xl); }
+  .price-card.featured { border-color:var(--violet); box-shadow:0 0 0 1px var(--violet), var(--shadow-lg); }
+  .price-card.featured::before {
+    content:'MOST POPULAR'; position:absolute; top:16px; right:-32px; transform:rotate(45deg);
+    background:var(--violet); color:white; font-size:10px; font-weight:700; padding:4px 40px;
+    letter-spacing:.5px;
+  }
+  .price-plan { font-size:14px; font-weight:600; color:var(--fg-muted); margin-bottom:8px; }
+  .price-amount { font-size:48px; font-weight:900; letter-spacing:-2px; margin-bottom:4px; }
+  .price-period { font-size:13px; color:var(--fg-light); margin-bottom:24px; }
+  .price-features { list-style:none; display:flex; flex-direction:column; gap:10px; margin-bottom:28px; }
+  .price-features li { display:flex; align-items:center; gap:8px; font-size:14px; color:var(--fg-muted); }
+  .price-features li svg { width:18px; height:18px; color:var(--green); flex-shrink:0; }
+  .price-btn { width:100%; padding:12px; font-size:14px; font-weight:600; border-radius:var(--radius); cursor:pointer; transition:all .2s; }
+  .price-btn-primary { background:var(--violet); color:white; border:none; box-shadow:0 2px 8px var(--violet-glow); }
+  .price-btn-primary:hover { background:var(--violet-dark); transform:translateY(-1px); }
+  .price-btn-outline { background:white; color:var(--fg); border:1px solid var(--border); }
+  .price-btn-outline:hover { background:var(--border-light); }
+
+  /* ═══════════════════════════════════════════════════════
+     FAQ
+     ═══════════════════════════════════════════════════════ */
+  .faq-section { padding:100px 0; background:var(--bg-alt); }
+  .faq-list { max-width:720px; margin:0 auto; display:flex; flex-direction:column; gap:8px; }
+  .faq-item { border:1px solid var(--border); border-radius:var(--radius); background:var(--bg); overflow:hidden; transition:border-color .2s; }
+  .faq-item:hover { border-color:var(--fg-light); }
+  .faq-q {
+    display:flex; justify-content:space-between; align-items:center; padding:18px 24px;
+    cursor:pointer; font-size:15px; font-weight:600; user-select:none;
+  }
+  .faq-q svg { width:18px; height:18px; color:var(--fg-muted); transition:transform .3s; flex-shrink:0; }
+  .faq-item.open .faq-q svg { transform:rotate(180deg); }
+  .faq-a {
+    max-height:0; overflow:hidden; transition:max-height .3s ease, padding .3s ease;
+    padding:0 24px; font-size:14px; color:var(--fg-muted); line-height:1.8;
+  }
+  .faq-item.open .faq-a { max-height:300px; padding:0 24px 18px; }
+
+  /* ═══════════════════════════════════════════════════════
+     FINAL CTA
+     ═══════════════════════════════════════════════════════ */
+  .cta-section {
+    padding:100px 0; text-align:center; position:relative; overflow:hidden;
+    background:linear-gradient(135deg, var(--bg-dark) 0%, #1a1a2e 100%);
+    color:white;
+  }
+  .cta-section::before {
+    content:''; position:absolute; top:-50%; left:50%; transform:translateX(-50%);
+    width:800px; height:800px; border-radius:50%;
+    background:radial-gradient(circle, rgba(124,58,237,.2) 0%, transparent 60%);
+  }
+  .cta-section h2 { font-size:clamp(28px,4vw,44px); font-weight:800; letter-spacing:-1.5px; margin-bottom:16px; position:relative; }
+  .cta-section p { font-size:17px; color:rgba(255,255,255,.6); max-width:480px; margin:0 auto 36px; position:relative; }
+  .cta-btns { display:flex; gap:14px; justify-content:center; position:relative; }
+  .cta-btn-white {
+    padding:14px 32px; font-size:15px; font-weight:600; border:none;
+    background:white; color:var(--bg-dark); border-radius:var(--radius); cursor:pointer;
+    transition:all .2s; box-shadow:0 4px 20px rgba(255,255,255,.15);
+  }
+  .cta-btn-white:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(255,255,255,.2); }
+  .cta-btn-ghost {
+    padding:14px 32px; font-size:15px; font-weight:600; border:1px solid rgba(255,255,255,.2);
+    background:transparent; color:white; border-radius:var(--radius); cursor:pointer;
+    transition:all .2s;
+  }
+  .cta-btn-ghost:hover { background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.3); }
+
+  /* ═══════════════════════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════════════════════ */
+  .footer { padding:64px 0 32px; border-top:1px solid var(--border-light); background:var(--bg); }
+  .footer-grid { display:grid; grid-template-columns:2fr 1fr 1fr 1fr 1fr; gap:40px; margin-bottom:48px; }
+  .footer-brand p { font-size:13px; color:var(--fg-muted); line-height:1.7; margin-top:12px; max-width:260px; }
+  .footer-col h4 { font-size:13px; font-weight:700; margin-bottom:14px; text-transform:uppercase; letter-spacing:.5px; }
+  .footer-col a { display:block; font-size:13px; color:var(--fg-muted); text-decoration:none; padding:4px 0; transition:color .15s; }
+  .footer-col a:hover { color:var(--fg); }
+  .footer-bottom {
+    display:flex; justify-content:space-between; align-items:center; padding-top:24px;
+    border-top:1px solid var(--border-light); font-size:12px; color:var(--fg-light);
+  }
+  .footer-socials { display:flex; gap:16px; }
+  .footer-socials a { color:var(--fg-light); transition:color .15s; }
+  .footer-socials a:hover { color:var(--fg); }
+  .footer-socials svg { width:18px; height:18px; }
+
+  /* ═══════════════════════════════════════════════════════
+     RESPONSIVE
+     ═══════════════════════════════════════════════════════ */
+  @media(max-width:768px) {
+    .nav-links { display:none; }
+    .hero h1 { font-size:36px; letter-spacing:-1px; }
+    .hero p { font-size:15px; }
+    .hero-float { display:none; }
+    .mockup-body { height:300px; }
+    .mockup-sidebar { width:160px; }
+    .mockup-kpis { grid-template-columns:repeat(2,1fr); }
+    .stats-grid { grid-template-columns:repeat(2,1fr); }
+    .bento-grid { grid-template-columns:1fr; }
+    .bento-card.span-2 { grid-column:span 1; }
+    .how-steps { grid-template-columns:1fr; gap:40px; }
+    .how-steps::before { display:none; }
+    .test-grid { grid-template-columns:1fr; }
+    .pricing-grid { grid-template-columns:1fr; }
+    .footer-grid { grid-template-columns:1fr 1fr; }
+    .cta-btns { flex-direction:column; align-items:center; }
+    .showcase-row { flex-direction:column !important; }
+    .showcase-visual { min-height:260px !important; }
+    .compare-table-wrap { overflow-x:auto; }
+    .roi-grid { grid-template-columns:1fr !important; }
+    .blog-grid { grid-template-columns:1fr !important; }
+    .marquee-track { animation-duration:20s !important; }
+    .case-inner { flex-direction:column !important; }
+    .trust-badges { flex-wrap:wrap; }
+    .app-inner { flex-direction:column !important; text-align:center; }
+    .app-phones { justify-content:center; }
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     FEATURE SHOWCASE (alternating rows)
+     ═══════════════════════════════════════════════════════ */
+  .showcase-section { padding:100px 0; }
+  .showcase-row {
+    display:flex; gap:48px; align-items:center; margin-bottom:80px;
+  }
+  .showcase-row:last-child { margin-bottom:0; }
+  .showcase-row.reverse { flex-direction:row-reverse; }
+  .showcase-text { flex:1; }
+  .showcase-text .overline { display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:var(--violet); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; }
+  .showcase-text h3 { font-size:28px; font-weight:800; letter-spacing:-1px; line-height:1.2; margin-bottom:12px; }
+  .showcase-text p { font-size:15px; color:var(--fg-muted); line-height:1.7; margin-bottom:20px; }
+  .showcase-checklist { list-style:none; display:flex; flex-direction:column; gap:8px; }
+  .showcase-checklist li { display:flex; align-items:center; gap:8px; font-size:14px; color:var(--fg-muted); }
+  .showcase-checklist li svg { width:18px; height:18px; color:var(--green); flex-shrink:0; }
+  .showcase-visual {
+    flex:1; min-height:320px; border-radius:var(--radius-xl); overflow:hidden;
+    position:relative; border:1px solid var(--border);
+  }
+  .showcase-visual-inner { position:absolute; inset:0; }
+
+  /* ═══════════════════════════════════════════════════════
+     ROI CALCULATOR
+     ═══════════════════════════════════════════════════════ */
+  .roi-section { padding:100px 0; background:var(--bg-alt); }
+  .roi-grid { display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:start; }
+  .roi-form { display:flex; flex-direction:column; gap:20px; }
+  .roi-field label { display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
+  .roi-field input[type=range] { width:100%; accent-color:var(--violet); }
+  .roi-field .roi-val { display:flex; justify-content:space-between; font-size:12px; color:var(--fg-muted); margin-top:4px; }
+  .roi-field .roi-current { font-size:20px; font-weight:800; color:var(--violet); }
+  .roi-result {
+    background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-xl);
+    padding:32px; position:sticky; top:100px;
+  }
+  .roi-result h3 { font-size:18px; font-weight:700; margin-bottom:20px; }
+  .roi-metric { display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid var(--border-light); }
+  .roi-metric:last-child { border-bottom:none; }
+  .roi-metric .rm-label { font-size:14px; color:var(--fg-muted); }
+  .roi-metric .rm-value { font-size:18px; font-weight:800; }
+  .roi-metric .rm-value.green { color:var(--green); }
+  .roi-total {
+    margin-top:20px; padding:20px; border-radius:var(--radius); text-align:center;
+    background:linear-gradient(135deg,var(--violet-light),var(--blue-light));
+  }
+  .roi-total .rt-label { font-size:13px; font-weight:600; color:var(--violet); margin-bottom:4px; }
+  .roi-total .rt-value { font-size:36px; font-weight:900; letter-spacing:-1.5px; color:var(--violet); }
+
+  /* ═══════════════════════════════════════════════════════
+     COMPARISON TABLE
+     ═══════════════════════════════════════════════════════ */
+  .compare-section { padding:100px 0; }
+  .compare-table-wrap { border:1px solid var(--border); border-radius:var(--radius-xl); overflow:hidden; }
+  .compare-table { width:100%; border-collapse:collapse; font-size:14px; }
+  .compare-table thead th {
+    padding:16px 20px; text-align:left; font-weight:600; font-size:13px;
+    background:var(--bg-alt); border-bottom:1px solid var(--border);
+  }
+  .compare-table thead th:first-child { width:240px; }
+  .compare-table thead th.highlight { color:var(--violet); background:var(--violet-light); }
+  .compare-table tbody td { padding:14px 20px; border-bottom:1px solid var(--border-light); }
+  .compare-table tbody td:first-child { font-weight:500; color:var(--fg); }
+  .compare-table tbody td.highlight { background:rgba(124,58,237,.02); }
+  .compare-table tbody tr:last-child td { border-bottom:none; }
+  .compare-check { color:var(--green); font-size:18px; }
+  .compare-x { color:var(--fg-light); font-size:14px; }
+  .compare-partial { color:var(--orange); font-size:12px; font-weight:500; }
+
+  /* ═══════════════════════════════════════════════════════
+     MARQUEE TESTIMONIALS
+     ═══════════════════════════════════════════════════════ */
+  .marquee-section { padding:60px 0; overflow:hidden; border-top:1px solid var(--border-light); border-bottom:1px solid var(--border-light); }
+  .marquee-track { display:flex; gap:20px; animation:marqueeScroll 35s linear infinite; width:max-content; }
+  .marquee-track:hover { animation-play-state:paused; }
+  @keyframes marqueeScroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+  .marquee-card {
+    min-width:320px; padding:20px; border:1px solid var(--border); border-radius:var(--radius);
+    background:var(--bg); flex-shrink:0;
+  }
+  .marquee-card .mq-text { font-size:13px; color:var(--fg-muted); line-height:1.6; margin-bottom:12px; font-style:italic; }
+  .marquee-card .mq-author { display:flex; align-items:center; gap:8px; }
+  .marquee-card .mq-avatar { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:10px; font-weight:700; }
+  .marquee-card .mq-name { font-size:12px; font-weight:600; }
+  .marquee-card .mq-role { font-size:11px; color:var(--fg-light); }
+
+  /* ═══════════════════════════════════════════════════════
+     CASE STUDY
+     ═══════════════════════════════════════════════════════ */
+  .case-section { padding:100px 0; background:var(--bg-alt); }
+  .case-inner {
+    display:flex; gap:48px; align-items:center;
+    border:1px solid var(--border); border-radius:var(--radius-xl);
+    background:var(--bg); overflow:hidden;
+  }
+  .case-visual { flex:1; min-height:360px; background:linear-gradient(135deg,#1a1a2e,#16213e); position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+  .case-visual-stat { text-align:center; position:relative; z-index:1; }
+  .case-visual-stat .big { font-size:72px; font-weight:900; color:white; letter-spacing:-3px; line-height:1; }
+  .case-visual-stat .sub { font-size:16px; color:rgba(255,255,255,.6); margin-top:8px; }
+  .case-visual::before {
+    content:''; position:absolute; width:300px; height:300px; border-radius:50%;
+    background:radial-gradient(circle, rgba(124,58,237,.3) 0%, transparent 70%);
+    top:50%; left:50%; transform:translate(-50%,-50%);
+  }
+  .case-content { flex:1; padding:40px 40px 40px 0; }
+  .case-content .case-badge { display:inline-block; padding:4px 12px; border-radius:50px; font-size:11px; font-weight:600; background:var(--green-light); color:var(--green); margin-bottom:16px; }
+  .case-content h3 { font-size:24px; font-weight:800; letter-spacing:-.5px; margin-bottom:8px; }
+  .case-content .case-company { font-size:14px; color:var(--fg-muted); margin-bottom:20px; }
+  .case-content blockquote { font-size:15px; color:var(--fg); line-height:1.8; font-style:italic; border-left:3px solid var(--violet); padding-left:16px; margin-bottom:20px; }
+  .case-metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+  .case-metric { text-align:center; padding:12px; border-radius:var(--radius); background:var(--bg-alt); }
+  .case-metric .cm-val { font-size:22px; font-weight:800; color:var(--violet); }
+  .case-metric .cm-label { font-size:11px; color:var(--fg-muted); }
+
+  /* ═══════════════════════════════════════════════════════
+     SECURITY & TRUST
+     ═══════════════════════════════════════════════════════ */
+  .trust-section { padding:80px 0; }
+  .trust-badges { display:flex; justify-content:center; gap:32px; flex-wrap:wrap; }
+  .trust-badge {
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+    padding:24px 20px; border:1px solid var(--border); border-radius:var(--radius-xl);
+    background:var(--bg); min-width:160px; text-align:center;
+    transition:transform .2s, box-shadow .2s;
+  }
+  .trust-badge:hover { transform:translateY(-4px); box-shadow:var(--shadow-lg); }
+  .trust-badge-icon {
+    width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center;
+  }
+  .trust-badge-icon svg { width:24px; height:24px; }
+  .trust-badge .tb-title { font-size:13px; font-weight:700; }
+  .trust-badge .tb-desc { font-size:11px; color:var(--fg-muted); line-height:1.5; }
+
+  /* ═══════════════════════════════════════════════════════
+     BLOG PREVIEW
+     ═══════════════════════════════════════════════════════ */
+  .blog-section { padding:100px 0; background:var(--bg-alt); }
+  .blog-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+  .blog-card {
+    border:1px solid var(--border); border-radius:var(--radius-xl); overflow:hidden;
+    background:var(--bg); transition:transform .2s, box-shadow .2s;
+  }
+  .blog-card:hover { transform:translateY(-6px); box-shadow:var(--shadow-lg); }
+  .blog-card-img { height:180px; display:flex; align-items:center; justify-content:center; font-size:48px; }
+  .blog-card-body { padding:20px; }
+  .blog-card-tag { display:inline-block; padding:3px 10px; border-radius:50px; font-size:11px; font-weight:600; margin-bottom:10px; }
+  .blog-card-body h3 { font-size:16px; font-weight:700; margin-bottom:6px; line-height:1.4; }
+  .blog-card-body p { font-size:13px; color:var(--fg-muted); line-height:1.6; margin-bottom:12px; }
+  .blog-card-meta { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--fg-light); }
+  .blog-card-meta .bm-avatar { width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:9px; font-weight:700; }
+
+  /* ═══════════════════════════════════════════════════════
+     APP DOWNLOAD
+     ═══════════════════════════════════════════════════════ */
+  .app-section { padding:80px 0; }
+  .app-inner {
+    display:flex; align-items:center; gap:48px;
+    border:1px solid var(--border); border-radius:var(--radius-xl);
+    background:linear-gradient(135deg, #09090b, #1a1a2e); padding:48px; color:white; overflow:hidden;
+    position:relative;
+  }
+  .app-inner::before {
+    content:''; position:absolute; top:-100px; right:-100px; width:400px; height:400px;
+    border-radius:50%; background:radial-gradient(circle, rgba(124,58,237,.15) 0%, transparent 60%);
+  }
+  .app-text { flex:1; position:relative; z-index:1; }
+  .app-text h3 { font-size:28px; font-weight:800; letter-spacing:-1px; margin-bottom:8px; }
+  .app-text p { font-size:15px; color:rgba(255,255,255,.6); margin-bottom:24px; line-height:1.7; }
+  .app-badges { display:flex; gap:12px; }
+  .app-badge {
+    display:flex; align-items:center; gap:8px; padding:10px 20px; border-radius:10px;
+    background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.15);
+    cursor:pointer; transition:all .2s;
+  }
+  .app-badge:hover { background:rgba(255,255,255,.15); border-color:rgba(255,255,255,.25); }
+  .app-badge svg { width:24px; height:24px; }
+  .app-badge .ab-text { font-size:10px; color:rgba(255,255,255,.6); line-height:1; }
+  .app-badge .ab-store { font-size:14px; font-weight:700; color:white; }
+  .app-phones { display:flex; gap:16px; position:relative; z-index:1; }
+  .app-phone {
+    width:120px; height:220px; border-radius:20px; border:2px solid rgba(255,255,255,.15);
+    background:rgba(255,255,255,.05); overflow:hidden; position:relative;
+    transition:transform .3s;
+  }
+  .app-phone:hover { transform:translateY(-8px); }
+  .app-phone:nth-child(2) { margin-top:24px; }
+  .app-phone-header { height:28px; background:var(--violet); display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:white; }
+  .app-phone-body { padding:8px; }
+  .app-phone-row { background:rgba(255,255,255,.06); border-radius:6px; padding:6px 8px; margin-bottom:4px; font-size:8px; color:rgba(255,255,255,.5); }
+  .app-phone-row.active { background:rgba(124,58,237,.2); color:white; border:1px solid rgba(124,58,237,.3); }
+
+  /* ═══════════════════════════════════════════════════════
+     NEWSLETTER
+     ═══════════════════════════════════════════════════════ */
+  .newsletter-section { padding:60px 0; border-top:1px solid var(--border-light); }
+  .newsletter-inner { display:flex; align-items:center; justify-content:space-between; gap:32px; }
+  .newsletter-text h3 { font-size:20px; font-weight:700; margin-bottom:4px; }
+  .newsletter-text p { font-size:14px; color:var(--fg-muted); }
+  .newsletter-form { display:flex; gap:8px; }
+  .newsletter-form input {
+    padding:10px 16px; border:1px solid var(--border); border-radius:8px;
+    font-size:14px; outline:none; width:280px; font-family:inherit;
+    transition:border-color .2s;
+  }
+  .newsletter-form input:focus { border-color:var(--violet); }
+</style>
+</head>
+<body>
+
+<!-- Scroll Progress -->
+<div class="scroll-prog" id="scroll-prog"></div>
+
+<!-- ═══════════ NAVIGATION ═══════════ -->
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      <span>FlexDesk</span>
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#how">How it Works</a>
+      <a href="#testimonials">Testimonials</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <div class="nav-actions">
+      <button class="btn-ghost">Log In</button>
+      <button class="btn-primary">Start Free Trial</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero">
+  <div class="container">
+    <!-- Floating cards -->
+    <div class="hero-float f1 reveal">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" style="width:14px;height:14px"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div><div style="font-weight:600;font-size:12px">Job Completed</div><div style="font-size:11px;color:var(--fg-muted)">AC Repair - $1,240</div></div>
+      </div>
+    </div>
+    <div class="hero-float f2 reveal">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" style="width:14px;height:14px"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
+        </div>
+        <div><div style="font-weight:600;font-size:12px">Invoice Sent</div><div style="font-size:11px;color:var(--fg-muted)">INV-892 &bull; $2,100</div></div>
+      </div>
+    </div>
+    <div class="hero-float f3 reveal">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--violet);display:flex;align-items:center;justify-content:center">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" style="width:14px;height:14px"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4-4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        </div>
+        <div><div style="font-weight:600;font-size:12px">Tech Dispatched</div><div style="font-size:11px;color:var(--fg-muted)">John D. &rarr; Site #42</div></div>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <div class="hero-badge"><span class="pulse"></span> Now in Beta &mdash; Join 10,000+ businesses</div>
+    </div>
+    <h1 class="reveal reveal-delay-1">
+      The <span class="gradient-text">operating system</span><br>for field service
+    </h1>
+    <p class="reveal reveal-delay-2">Dispatch techs, schedule jobs, send invoices, and grow your business &mdash; all from one beautifully simple platform.</p>
+    <div class="hero-ctas reveal reveal-delay-3">
+      <button class="btn-primary-lg" onclick="this.textContent='Loading...';setTimeout(()=>this.textContent='Start Free Trial',1500)">Start Free Trial</button>
+      <button class="btn-secondary-lg">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;vertical-align:-3px;margin-right:6px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Watch Demo
+      </button>
+    </div>
+    <p class="hero-note reveal reveal-delay-4">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      No credit card required &bull; 14-day free trial &bull; Cancel anytime
+    </p>
+
+    <!-- Product Mockup -->
+    <div class="hero-mockup reveal">
+      <div class="mockup-bar">
+        <div class="mockup-dot" style="background:#ef4444"></div>
+        <div class="mockup-dot" style="background:#f97316"></div>
+        <div class="mockup-dot" style="background:#10b981"></div>
+        <div class="mockup-url">app.flexdesk.io/dashboard</div>
+      </div>
+      <div class="mockup-body">
+        <div class="mockup-sidebar">
+          <div class="mockup-sidebar-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+            FlexDesk
+          </div>
+          <div class="mockup-nav-item active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            Dashboard
+          </div>
+          <div class="mockup-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4-4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            Clients
+          </div>
+          <div class="mockup-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+            Jobs
+          </div>
+          <div class="mockup-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            Schedule
+          </div>
+          <div class="mockup-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/></svg>
+            Invoices
+          </div>
+          <div class="mockup-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Reports
+          </div>
+        </div>
+        <div class="mockup-content">
+          <div class="mockup-topbar">
+            <h3>Dashboard</h3>
+            <div class="mockup-topbar-actions">
+              <button class="mockup-topbar-btn">Export</button>
+              <button class="mockup-topbar-btn primary">+ New Job</button>
+            </div>
+          </div>
+          <div class="mockup-kpis">
+            <div class="mockup-kpi"><div class="mockup-kpi-label">Revenue</div><div class="mockup-kpi-val">$48,352</div><div class="mockup-kpi-change up">&uarr; 12.5%</div></div>
+            <div class="mockup-kpi"><div class="mockup-kpi-label">Active Jobs</div><div class="mockup-kpi-val">127</div><div class="mockup-kpi-change up">&uarr; 8</div></div>
+            <div class="mockup-kpi"><div class="mockup-kpi-label">Technicians</div><div class="mockup-kpi-val">24</div><div class="mockup-kpi-change">18 on duty</div></div>
+            <div class="mockup-kpi"><div class="mockup-kpi-label">Completion</div><div class="mockup-kpi-val">94.2%</div><div class="mockup-kpi-change down">&darr; 1.3%</div></div>
+          </div>
+          <div class="mockup-chart" id="mockup-chart"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SOCIAL PROOF ═══════════ -->
+<section class="logos-section">
+  <div class="container">
+    <div class="logos-label reveal">Trusted by industry leaders</div>
+    <div class="logos-row reveal">
+      <span class="logo-item">ServiceMaster</span>
+      <span class="logo-item">ComfortPro</span>
+      <span class="logo-item">Elite HVAC</span>
+      <span class="logo-item">GreenScape</span>
+      <span class="logo-item">TechForce</span>
+      <span class="logo-item">AquaFix</span>
+      <span class="logo-item">ShieldGuard</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ STATS ═══════════ -->
+<section class="stats-section">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-card reveal">
+        <div class="stat-num gradient-text" data-count="10000">0</div>
+        <div class="stat-label">Businesses Worldwide</div>
+      </div>
+      <div class="stat-card reveal reveal-delay-1">
+        <div class="stat-num" style="color:var(--green)" data-count="500" data-suffix="K+">0</div>
+        <div class="stat-label">Jobs Completed</div>
+      </div>
+      <div class="stat-card reveal reveal-delay-2">
+        <div class="stat-num" style="color:var(--blue)" data-count="99" data-suffix=".9%">0</div>
+        <div class="stat-label">Uptime Guaranteed</div>
+      </div>
+      <div class="stat-card reveal reveal-delay-3">
+        <div class="stat-num" style="color:var(--orange)" data-count="4" data-suffix=".9/5">0</div>
+        <div class="stat-label">Average Rating</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FEATURES ═══════════ -->
+<section class="features-section" id="features">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="overline">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10"/></svg>
+        Features
+      </div>
+      <h2>Everything you need to<br><span class="gradient-text">run your business</span></h2>
+      <p>From dispatching to invoicing, FlexDesk handles it all so you can focus on what matters most.</p>
+    </div>
+
+    <div class="bento-grid">
+      <!-- Card 1: Scheduling (large) -->
+      <div class="bento-card span-2 reveal">
+        <div class="bento-icon" style="background:var(--violet-light);color:var(--violet)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        </div>
+        <h3>Smart Scheduling & Dispatch</h3>
+        <p>Drag-and-drop calendar with real-time technician availability, route optimization, and automatic conflict detection.</p>
+        <div class="bento-visual" style="padding:0">
+          <div style="display:flex;height:120px">
+            <div style="width:70px;border-right:1px solid var(--border-light);padding:8px;font-size:10px;color:var(--fg-light);display:flex;flex-direction:column;justify-content:space-between"><span>8 AM</span><span>10 AM</span><span>12 PM</span><span>2 PM</span></div>
+            <div style="flex:1;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:8px">
+              <div style="background:var(--violet-light);border-radius:6px;grid-row:1/3;padding:6px;font-size:10px;font-weight:600;color:var(--violet)">AC Repair<br><span style="font-weight:400;opacity:.7">John D.</span></div>
+              <div style="background:var(--blue-light);border-radius:6px;grid-row:2/4;padding:6px;font-size:10px;font-weight:600;color:var(--blue)">Plumbing<br><span style="font-weight:400;opacity:.7">Sam M.</span></div>
+              <div style="background:var(--green-light);border-radius:6px;grid-row:1/2;padding:6px;font-size:10px;font-weight:600;color:var(--green)">Inspection<br><span style="font-weight:400;opacity:.7">Rosa P.</span></div>
+              <div style="background:var(--orange-light);border-radius:6px;grid-row:2/4;padding:6px;font-size:10px;font-weight:600;color:var(--orange)">Electrical<br><span style="font-weight:400;opacity:.7">Mike J.</span></div>
+              <div style="background:var(--violet-light);border-radius:6px;grid-row:3/4;padding:6px;font-size:10px;font-weight:600;color:var(--violet)">HVAC<br><span style="font-weight:400;opacity:.7">Tina C.</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: Analytics -->
+      <div class="bento-card span-row reveal reveal-delay-1">
+        <div class="bento-icon" style="background:var(--blue-light);color:var(--blue)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <h3>Real-Time Analytics</h3>
+        <p>Beautiful dashboards with revenue trends, technician performance, and customer satisfaction scores.</p>
+        <div class="bento-visual">
+          <div class="bento-mini-chart" id="bento-chart"></div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:12px">
+          <div style="flex:1;padding:10px;border-radius:8px;background:var(--green-light);text-align:center"><div style="font-size:16px;font-weight:800;color:var(--green)">+23%</div><div style="font-size:10px;color:var(--fg-muted)">Revenue</div></div>
+          <div style="flex:1;padding:10px;border-radius:8px;background:var(--blue-light);text-align:center"><div style="font-size:16px;font-weight:800;color:var(--blue)">94%</div><div style="font-size:10px;color:var(--fg-muted)">Completion</div></div>
+        </div>
+      </div>
+
+      <!-- Card 3: Invoicing -->
+      <div class="bento-card reveal reveal-delay-2">
+        <div class="bento-icon" style="background:var(--green-light);color:var(--green)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        </div>
+        <h3>One-Click Invoicing</h3>
+        <p>Generate professional invoices, accept online payments, and automate follow-ups.</p>
+        <div class="bento-visual" style="padding:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-size:11px;font-weight:600">INV-892</span><span class="badge-sm" style="background:var(--green-light);color:var(--green)">Paid</span></div>
+          <div style="font-size:24px;font-weight:800;margin-bottom:4px">$2,100.00</div>
+          <div style="font-size:11px;color:var(--fg-muted)">Elite Properties &bull; Due Feb 15</div>
+        </div>
+      </div>
+
+      <!-- Card 4: Dispatch Map -->
+      <div class="bento-card reveal">
+        <div class="bento-icon" style="background:var(--orange-light);color:var(--orange)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <h3>Live GPS Tracking</h3>
+        <p>Real-time technician locations with route optimization and ETA updates.</p>
+        <div class="bento-visual">
+          <div class="bento-mini-map">
+            <div class="bento-map-pin" style="background:var(--violet);top:25%;left:30%"></div>
+            <div class="bento-map-pin" style="background:var(--blue);top:50%;left:65%"></div>
+            <div class="bento-map-pin" style="background:var(--green);top:70%;left:40%"></div>
+            <div class="bento-map-pin" style="background:var(--orange);top:35%;left:80%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5: CRM (large) -->
+      <div class="bento-card span-2 reveal">
+        <div class="bento-icon" style="background:var(--violet-light);color:var(--violet)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4-4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        </div>
+        <h3>Built-In CRM</h3>
+        <p>Complete customer profiles with job history, communication logs, equipment records, and lifetime value tracking.</p>
+        <div class="bento-visual" style="padding:0;overflow-x:auto">
+          <table class="bento-mini-table">
+            <tr><td style="font-weight:600">Sarah Mitchell</td><td>12 jobs</td><td style="color:var(--green);font-weight:600">$14,200</td><td><span class="mini-badge" style="background:var(--green-light);color:var(--green)">VIP</span></td></tr>
+            <tr><td style="font-weight:600">Elite Properties</td><td>28 jobs</td><td style="color:var(--green);font-weight:600">$42,800</td><td><span class="mini-badge" style="background:var(--violet-light);color:var(--violet)">Enterprise</span></td></tr>
+            <tr><td style="font-weight:600">Marcus Johnson</td><td>5 jobs</td><td style="color:var(--green);font-weight:600">$3,200</td><td><span class="mini-badge" style="background:var(--blue-light);color:var(--blue)">Active</span></td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Card 6: Mobile -->
+      <div class="bento-card reveal reveal-delay-1">
+        <div class="bento-icon" style="background:var(--blue-light);color:var(--blue)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        </div>
+        <h3>Mobile App</h3>
+        <p>Your entire business in your pocket. Works offline too.</p>
+        <div style="text-align:center;margin-top:16px">
+          <div style="display:inline-block;width:100px;height:180px;border-radius:20px;border:3px solid var(--border);background:var(--bg-alt);position:relative;overflow:hidden;box-shadow:var(--shadow)">
+            <div style="height:24px;background:var(--violet);display:flex;align-items:center;justify-content:center;font-size:9px;color:white;font-weight:600">FlexDesk</div>
+            <div style="padding:6px;font-size:8px">
+              <div style="background:var(--green-light);border-radius:4px;padding:4px;margin-bottom:4px;font-weight:600;color:var(--green)">3 Jobs Today</div>
+              <div style="background:var(--muted);border-radius:4px;padding:4px;margin-bottom:4px;font-size:7px">Next: AC Repair 10AM</div>
+              <div style="background:var(--muted);border-radius:4px;padding:4px;font-size:7px">Plumbing 2PM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ HOW IT WORKS ═══════════ -->
+<section class="how-section" id="how">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="overline">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        How it Works
+      </div>
+      <h2>Up and running in <span class="gradient-text">minutes</span></h2>
+      <p>No complex setup, no consultants. Start managing your field operations in three simple steps.</p>
+    </div>
+    <div class="how-steps">
+      <div class="how-step reveal">
+        <div class="how-num">1</div>
+        <h3>Set Up Your Workspace</h3>
+        <p>Add your team, services, and service areas. Import existing customer data with one click.</p>
+      </div>
+      <div class="how-step reveal reveal-delay-1">
+        <div class="how-num">2</div>
+        <h3>Schedule & Dispatch</h3>
+        <p>Drag jobs onto the calendar, assign technicians, and let smart routing optimize their day.</p>
+      </div>
+      <div class="how-step reveal reveal-delay-2">
+        <div class="how-num">3</div>
+        <h3>Invoice & Get Paid</h3>
+        <p>Generate invoices on-site, accept payments instantly, and watch your revenue dashboard grow.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ TESTIMONIALS ═══════════ -->
+<section class="testimonials-section" id="testimonials">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="overline">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        Testimonials
+      </div>
+      <h2>Loved by <span class="gradient-text">thousands</span> of teams</h2>
+      <p>See what field service professionals are saying about FlexDesk.</p>
+    </div>
+    <div class="test-grid">
+      <div class="test-card reveal">
+        <div class="test-stars"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+        <div class="test-quote">FlexDesk replaced three different tools for us. Scheduling, invoicing, and CRM all in one place. Our team adopted it in a day.</div>
+        <div class="test-author">
+          <div class="test-avatar" style="background:var(--violet)">JM</div>
+          <div class="test-author-info"><div class="name">James Martinez</div><div class="role">Owner, ComfortPro HVAC</div></div>
+        </div>
+      </div>
+      <div class="test-card reveal reveal-delay-1">
+        <div class="test-stars"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+        <div class="test-quote">The mobile app is a game-changer. Our techs update job status from the field and customers get notified automatically. Incredible.</div>
+        <div class="test-author">
+          <div class="test-avatar" style="background:var(--green)">SK</div>
+          <div class="test-author-info"><div class="name">Sarah Kim</div><div class="role">Operations Manager, GreenScape</div></div>
+        </div>
+      </div>
+      <div class="test-card reveal reveal-delay-2">
+        <div class="test-stars"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+        <div class="test-quote">We went from paper forms to fully digital in one weekend. Revenue is up 35% since we started using FlexDesk. Absolutely worth it.</div>
+        <div class="test-author">
+          <div class="test-avatar" style="background:var(--blue)">DR</div>
+          <div class="test-author-info"><div class="name">David Rivera</div><div class="role">CEO, Rivera Electrical</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ INTEGRATIONS ═══════════ -->
+<section class="integ-section">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="overline">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        Integrations
+      </div>
+      <h2>Works with tools you <span class="gradient-text">already use</span></h2>
+    </div>
+    <div class="integ-grid reveal">
+      <div class="integ-card"><div class="integ-icon" style="background:linear-gradient(135deg,#635bff,#a259ff)">S</div><div class="integ-name">Stripe</div></div>
+      <div class="integ-card"><div class="integ-icon" style="background:linear-gradient(135deg,#4285f4,#34a853)">G</div><div class="integ-name">Google</div></div>
+      <div class="integ-card"><div class="integ-icon" style="background:linear-gradient(135deg,#2ca01c,#4ba649)">QB</div><div class="integ-name">QuickBooks</div></div>
+      <div class="integ-card"><div class="integ-icon" style="background:linear-gradient(135deg,#e01e5a,#36c5f0)">S</div><div class="integ-name">Slack</div></div>
+      <div class="integ-card"><div class="integ-icon" style="background:linear-gradient(135deg,#25d366,#128c7e)">W</div><div class="integ-name">WhatsApp</div></div>
+      <div class="integ-card"><div class="integ-icon" style="background:linear-gradient(135deg,#0078d4,#00bcf2)">O</div><div class="integ-name">Outlook</div></div>
+      <div class="integ-card"><div class="integ-icon" style="background:linear-gradient(135deg,#ff4500,#ff8717)">Z</div><div class="integ-name">Zapier</div></div>
+      <div class="integ-card"><div class="integ-icon" style="background:linear-gradient(135deg,#7b68ee,#5a4fcf)">T</div><div class="integ-name">Twilio</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ PRICING ═══════════ -->
+<section class="pricing-section" id="pricing">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="overline">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        Pricing
+      </div>
+      <h2>Simple, transparent <span class="gradient-text">pricing</span></h2>
+      <p>No hidden fees. No surprise charges. Pick the plan that fits.</p>
+    </div>
+    <div class="pricing-toggle reveal">
+      <span class="active" id="p-monthly">Monthly</span>
+      <div class="pricing-pill" id="p-pill" onclick="toggleWebPricing()"></div>
+      <span id="p-yearly">Yearly <span style="color:var(--green);font-size:12px;font-weight:600">Save 20%</span></span>
+    </div>
+    <div class="pricing-grid">
+      <div class="price-card reveal">
+        <div class="price-plan">Starter</div>
+        <div class="price-amount" id="wp-starter">$29</div>
+        <div class="price-period">per month</div>
+        <ul class="price-features">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Up to 5 technicians</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> 100 jobs / month</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Email support</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Basic reporting</li>
+        </ul>
+        <button class="price-btn price-btn-outline">Get Started</button>
+      </div>
+      <div class="price-card featured reveal reveal-delay-1">
+        <div class="price-plan">Professional</div>
+        <div class="price-amount" id="wp-pro">$49</div>
+        <div class="price-period">per month</div>
+        <ul class="price-features">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Up to 25 technicians</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> 500 jobs / month</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Priority support</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Advanced analytics</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Integrations</li>
+        </ul>
+        <button class="price-btn price-btn-primary">Start Free Trial</button>
+      </div>
+      <div class="price-card reveal reveal-delay-2">
+        <div class="price-plan">Enterprise</div>
+        <div class="price-amount" id="wp-ent">$99</div>
+        <div class="price-period">per month</div>
+        <ul class="price-features">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Unlimited technicians</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Unlimited jobs</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Dedicated account manager</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Custom SLA</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> On-premise option</li>
+        </ul>
+        <button class="price-btn price-btn-outline">Contact Sales</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FAQ ═══════════ -->
+<section class="faq-section" id="faq">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="overline">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        FAQ
+      </div>
+      <h2>Got questions?</h2>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item reveal" onclick="this.classList.toggle('open')">
+        <div class="faq-q">How long does it take to set up FlexDesk?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="faq-a">Most teams are up and running in under 30 minutes. Import your existing data, invite your team, and start scheduling jobs right away. Our onboarding wizard guides you through every step.</div>
+      </div>
+      <div class="faq-item reveal" onclick="this.classList.toggle('open')">
+        <div class="faq-q">Can I try FlexDesk before committing?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="faq-a">Absolutely! We offer a 14-day free trial with full access to all Professional plan features. No credit card required. If you need more time, just reach out.</div>
+      </div>
+      <div class="faq-item reveal" onclick="this.classList.toggle('open')">
+        <div class="faq-q">Does FlexDesk work offline?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="faq-a">Yes. Our mobile app uses offline-first technology (IndexedDB sync) so your technicians can view job details, update statuses, and capture signatures even without internet. Everything syncs when connectivity returns.</div>
+      </div>
+      <div class="faq-item reveal" onclick="this.classList.toggle('open')">
+        <div class="faq-q">What integrations do you support?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="faq-a">FlexDesk integrates with Stripe, QuickBooks, Google Calendar, Slack, WhatsApp, Outlook, Twilio, Zapier, and more. Our API is fully documented for custom integrations.</div>
+      </div>
+      <div class="faq-item reveal" onclick="this.classList.toggle('open')">
+        <div class="faq-q">Can I cancel anytime?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="faq-a">Yes, you can cancel your subscription at any time. No long-term contracts, no cancellation fees. Your data remains accessible for 30 days after cancellation.</div>
+      </div>
+      <div class="faq-item reveal" onclick="this.classList.toggle('open')">
+        <div class="faq-q">Is my data secure?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="faq-a">FlexDesk uses enterprise-grade security with AES-256 encryption, workspace-scoped row-level security, JWT authentication, and regular security audits. We're SOC 2 Type II compliant.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FEATURE SHOWCASE ═══════════ -->
+<section class="showcase-section" id="showcase">
+  <div class="container">
+    <!-- Row 1: Scheduling -->
+    <div class="showcase-row reveal">
+      <div class="showcase-text">
+        <div class="overline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> Scheduling</div>
+        <h3>Drag-and-drop scheduling<br>that saves hours every week</h3>
+        <p>Assign jobs to the right technician based on skill, location, and availability. Our smart engine eliminates double-bookings and optimizes routes automatically.</p>
+        <ul class="showcase-checklist">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Conflict detection &amp; auto-resolution</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Recurring job templates</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Drag jobs between technicians</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> SMS/email notifications to clients</li>
+        </ul>
+      </div>
+      <div class="showcase-visual" style="background:linear-gradient(135deg,#faf5ff,#ede9fe)">
+        <div class="showcase-visual-inner" style="padding:24px">
+          <div style="display:flex;gap:12px;height:100%">
+            <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+              <div style="font-size:11px;font-weight:600;color:var(--fg-muted);padding:4px 0">Mon, Feb 10</div>
+              <div style="flex:1;background:white;border-radius:10px;border:1px solid var(--border);padding:10px;display:flex;flex-direction:column;gap:6px">
+                <div style="background:var(--violet-light);border-left:3px solid var(--violet);border-radius:4px;padding:8px;font-size:11px"><strong style="color:var(--violet)">AC Repair</strong><br><span style="color:var(--fg-muted)">8:00-10:00 &bull; John D.</span></div>
+                <div style="background:var(--blue-light);border-left:3px solid var(--blue);border-radius:4px;padding:8px;font-size:11px"><strong style="color:var(--blue)">Plumbing</strong><br><span style="color:var(--fg-muted)">10:30-12:00 &bull; Sam M.</span></div>
+                <div style="background:var(--green-light);border-left:3px solid var(--green);border-radius:4px;padding:8px;font-size:11px"><strong style="color:var(--green)">Inspection</strong><br><span style="color:var(--fg-muted)">1:00-2:30 &bull; Rosa P.</span></div>
+              </div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+              <div style="font-size:11px;font-weight:600;color:var(--fg-muted);padding:4px 0">Tue, Feb 11</div>
+              <div style="flex:1;background:white;border-radius:10px;border:1px solid var(--border);padding:10px;display:flex;flex-direction:column;gap:6px">
+                <div style="background:var(--orange-light);border-left:3px solid var(--orange);border-radius:4px;padding:8px;font-size:11px"><strong style="color:var(--orange)">Electrical</strong><br><span style="color:var(--fg-muted)">8:00-11:00 &bull; Mike J.</span></div>
+                <div style="background:var(--violet-light);border-left:3px solid var(--violet);border-radius:4px;padding:8px;font-size:11px"><strong style="color:var(--violet)">HVAC Install</strong><br><span style="color:var(--fg-muted)">12:00-4:00 &bull; Tina C.</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 2: Invoicing (reversed) -->
+    <div class="showcase-row reverse reveal">
+      <div class="showcase-text">
+        <div class="overline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg> Invoicing</div>
+        <h3>Get paid faster with<br>one-click invoicing</h3>
+        <p>Generate professional invoices on-site, accept credit card and ACH payments, and automate payment reminders. Average time to payment: 2.4 days.</p>
+        <ul class="showcase-checklist">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Stripe &amp; QuickBooks integration</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Automatic payment reminders</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Custom invoice templates</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Customer portal for self-service</li>
+        </ul>
+      </div>
+      <div class="showcase-visual" style="background:linear-gradient(135deg,#ecfdf5,#d1fae5)">
+        <div class="showcase-visual-inner" style="padding:24px;display:flex;align-items:center;justify-content:center">
+          <div style="width:260px;background:white;border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:0 8px 30px rgba(0,0,0,.06)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><span style="font-size:12px;font-weight:700;color:var(--fg)">INVOICE</span><span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:50px;background:var(--green-light);color:var(--green)">Paid</span></div>
+            <div style="font-size:11px;color:var(--fg-muted);margin-bottom:2px">INV-892 &bull; Feb 8, 2026</div>
+            <div style="font-size:11px;color:var(--fg-muted);margin-bottom:16px">Elite Properties LLC</div>
+            <div style="border-top:1px solid var(--border-light);padding-top:12px;font-size:11px;display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--fg-muted)">HVAC Repair</span><span style="font-weight:600">$1,200</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--fg-muted)">Parts (Compressor)</span><span style="font-weight:600">$650</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--fg-muted)">Labor (3h)</span><span style="font-weight:600">$250</span></div>
+            </div>
+            <div style="border-top:1px solid var(--border);margin-top:12px;padding-top:12px;display:flex;justify-content:space-between;font-size:14px;font-weight:800"><span>Total</span><span style="color:var(--green)">$2,100.00</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 3: Analytics -->
+    <div class="showcase-row reveal">
+      <div class="showcase-text">
+        <div class="overline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Analytics</div>
+        <h3>Data-driven decisions<br>at your fingertips</h3>
+        <p>Beautiful real-time dashboards that surface the metrics that matter. Track revenue, technician performance, customer satisfaction, and more.</p>
+        <ul class="showcase-checklist">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Revenue &amp; profitability tracking</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Technician utilization reports</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Custom report builder</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Scheduled email reports</li>
+        </ul>
+      </div>
+      <div class="showcase-visual" style="background:linear-gradient(135deg,#eff6ff,#dbeafe)">
+        <div class="showcase-visual-inner" style="padding:20px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div style="background:white;border-radius:10px;padding:12px;border:1px solid var(--border)"><div style="font-size:10px;color:var(--fg-muted)">Revenue</div><div style="font-size:18px;font-weight:800;color:var(--fg)">$48,352</div><div style="font-size:10px;color:var(--green)">+12.5%</div></div>
+            <div style="background:white;border-radius:10px;padding:12px;border:1px solid var(--border)"><div style="font-size:10px;color:var(--fg-muted)">Avg. Job Value</div><div style="font-size:18px;font-weight:800;color:var(--fg)">$384</div><div style="font-size:10px;color:var(--green)">+8.2%</div></div>
+          </div>
+          <div style="background:white;border-radius:10px;padding:12px;border:1px solid var(--border);flex:1;display:flex;align-items:flex-end;gap:4px">
+            <div style="flex:1;height:40%;background:var(--blue);border-radius:3px 3px 0 0;opacity:.5"></div>
+            <div style="flex:1;height:55%;background:var(--blue);border-radius:3px 3px 0 0;opacity:.6"></div>
+            <div style="flex:1;height:45%;background:var(--blue);border-radius:3px 3px 0 0;opacity:.5"></div>
+            <div style="flex:1;height:70%;background:var(--blue);border-radius:3px 3px 0 0;opacity:.7"></div>
+            <div style="flex:1;height:60%;background:var(--blue);border-radius:3px 3px 0 0;opacity:.65"></div>
+            <div style="flex:1;height:85%;background:var(--blue);border-radius:3px 3px 0 0;opacity:.8"></div>
+            <div style="flex:1;height:75%;background:var(--blue);border-radius:3px 3px 0 0;opacity:.75"></div>
+            <div style="flex:1;height:95%;background:var(--violet);border-radius:3px 3px 0 0"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ ROI CALCULATOR ═══════════ -->
+<section class="roi-section" id="roi">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="overline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg> ROI Calculator</div>
+      <h2>See your potential <span class="gradient-text">savings</span></h2>
+      <p>Drag the sliders to estimate how much FlexDesk can save your business.</p>
+    </div>
+    <div class="roi-grid">
+      <div class="roi-form reveal">
+        <div class="roi-field">
+          <label>Number of Technicians</label>
+          <div class="roi-current" id="roi-techs-val">10</div>
+          <input type="range" min="1" max="100" value="10" id="roi-techs" oninput="calcROI()">
+          <div class="roi-val"><span>1</span><span>100</span></div>
+        </div>
+        <div class="roi-field">
+          <label>Jobs Per Week</label>
+          <div class="roi-current" id="roi-jobs-val">50</div>
+          <input type="range" min="10" max="500" value="50" id="roi-jobs" oninput="calcROI()">
+          <div class="roi-val"><span>10</span><span>500</span></div>
+        </div>
+        <div class="roi-field">
+          <label>Average Job Value ($)</label>
+          <div class="roi-current" id="roi-value-val">$250</div>
+          <input type="range" min="50" max="2000" value="250" step="50" id="roi-value" oninput="calcROI()">
+          <div class="roi-val"><span>$50</span><span>$2,000</span></div>
+        </div>
+        <div class="roi-field">
+          <label>Hours Spent on Admin Per Week</label>
+          <div class="roi-current" id="roi-admin-val">15</div>
+          <input type="range" min="2" max="60" value="15" id="roi-admin" oninput="calcROI()">
+          <div class="roi-val"><span>2h</span><span>60h</span></div>
+        </div>
+      </div>
+      <div class="roi-result reveal reveal-delay-1">
+        <h3>Your Estimated Savings</h3>
+        <div class="roi-metric"><span class="rm-label">Admin Time Saved / Week</span><span class="rm-value green" id="roi-res-time">10.5 hours</span></div>
+        <div class="roi-metric"><span class="rm-label">Revenue from Fewer Missed Jobs</span><span class="rm-value green" id="roi-res-revenue">$3,750 / mo</span></div>
+        <div class="roi-metric"><span class="rm-label">Faster Payment Collection</span><span class="rm-value green" id="roi-res-payment">$1,875 / mo</span></div>
+        <div class="roi-metric"><span class="rm-label">FlexDesk Cost</span><span class="rm-value" id="roi-res-cost">-$49 / mo</span></div>
+        <div class="roi-total">
+          <div class="rt-label">Annual Net Savings</div>
+          <div class="rt-value" id="roi-res-total">$66,912</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ COMPARISON TABLE ═══════════ -->
+<section class="compare-section" id="compare">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="overline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg> Comparison</div>
+      <h2>How FlexDesk <span class="gradient-text">compares</span></h2>
+      <p>See why teams switch from competitors to FlexDesk.</p>
+    </div>
+    <div class="compare-table-wrap reveal">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th class="highlight">FlexDesk</th>
+            <th>ServiceTitan</th>
+            <th>Jobber</th>
+            <th>Housecall Pro</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Smart Scheduling</td><td class="highlight"><span class="compare-check">&#10003;</span></td><td><span class="compare-check">&#10003;</span></td><td><span class="compare-check">&#10003;</span></td><td><span class="compare-check">&#10003;</span></td></tr>
+          <tr><td>GPS Live Tracking</td><td class="highlight"><span class="compare-check">&#10003;</span></td><td><span class="compare-check">&#10003;</span></td><td><span class="compare-x">&#8212;</span></td><td><span class="compare-partial">Add-on</span></td></tr>
+          <tr><td>Built-in CRM</td><td class="highlight"><span class="compare-check">&#10003;</span></td><td><span class="compare-check">&#10003;</span></td><td><span class="compare-partial">Basic</span></td><td><span class="compare-partial">Basic</span></td></tr>
+          <tr><td>Offline Mobile App</td><td class="highlight"><span class="compare-check">&#10003;</span></td><td><span class="compare-x">&#8212;</span></td><td><span class="compare-x">&#8212;</span></td><td><span class="compare-partial">Limited</span></td></tr>
+          <tr><td>Custom Integrations API</td><td class="highlight"><span class="compare-check">&#10003;</span></td><td><span class="compare-partial">Enterprise</span></td><td><span class="compare-check">&#10003;</span></td><td><span class="compare-x">&#8212;</span></td></tr>
+          <tr><td>Customer Portal</td><td class="highlight"><span class="compare-check">&#10003;</span></td><td><span class="compare-check">&#10003;</span></td><td><span class="compare-x">&#8212;</span></td><td><span class="compare-check">&#10003;</span></td></tr>
+          <tr><td>Advanced Analytics</td><td class="highlight"><span class="compare-check">&#10003;</span></td><td><span class="compare-check">&#10003;</span></td><td><span class="compare-partial">Basic</span></td><td><span class="compare-partial">Basic</span></td></tr>
+          <tr><td>Multi-location Support</td><td class="highlight"><span class="compare-check">&#10003;</span></td><td><span class="compare-check">&#10003;</span></td><td><span class="compare-x">&#8212;</span></td><td><span class="compare-x">&#8212;</span></td></tr>
+          <tr><td>Free Trial</td><td class="highlight"><span class="compare-check">&#10003; 14 days</span></td><td><span class="compare-x">&#8212;</span></td><td><span class="compare-check">&#10003;</span></td><td><span class="compare-check">&#10003;</span></td></tr>
+          <tr><td>Starting Price</td><td class="highlight" style="font-weight:700;color:var(--violet)">$29/mo</td><td style="color:var(--fg-muted)">Contact sales</td><td style="color:var(--fg-muted)">$49/mo</td><td style="color:var(--fg-muted)">$59/mo</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ MARQUEE TESTIMONIALS ═══════════ -->
+<section class="marquee-section">
+  <div class="marquee-track" id="marquee-track">
+    <div class="marquee-card"><div class="mq-text">FlexDesk cut our scheduling time by 70%. We used to spend hours on the phone, now it's done in minutes.</div><div class="mq-author"><div class="mq-avatar" style="background:var(--violet)">AK</div><div><div class="mq-name">Alex K.</div><div class="mq-role">ProServ Solutions</div></div></div></div>
+    <div class="marquee-card"><div class="mq-text">The invoicing alone paid for itself. We get paid 3x faster than before. Customers love the online portal.</div><div class="mq-author"><div class="mq-avatar" style="background:var(--green)">LM</div><div><div class="mq-name">Lisa M.</div><div class="mq-role">GreenScape Lawns</div></div></div></div>
+    <div class="marquee-card"><div class="mq-text">We switched from Jobber and haven't looked back. The mobile app and offline mode are game-changers for rural areas.</div><div class="mq-author"><div class="mq-avatar" style="background:var(--blue)">RP</div><div><div class="mq-name">Ryan P.</div><div class="mq-role">AquaFix Plumbing</div></div></div></div>
+    <div class="marquee-card"><div class="mq-text">Best customer support I've ever experienced with a SaaS product. They helped us migrate 5,000 customer records.</div><div class="mq-author"><div class="mq-avatar" style="background:var(--orange)">JW</div><div><div class="mq-name">Jenny W.</div><div class="mq-role">Elite HVAC Services</div></div></div></div>
+    <div class="marquee-card"><div class="mq-text">Our technicians actually enjoy using FlexDesk. That never happened with our old system. Adoption was instant.</div><div class="mq-author"><div class="mq-avatar" style="background:var(--red)">MC</div><div><div class="mq-name">Marco C.</div><div class="mq-role">Rivera Electrical</div></div></div></div>
+    <div class="marquee-card"><div class="mq-text">Real-time GPS tracking gave us visibility we never had. Customers get accurate ETAs and love it.</div><div class="mq-author"><div class="mq-avatar" style="background:#ec4899">TH</div><div><div class="mq-name">Tanya H.</div><div class="mq-role">ShieldGuard Security</div></div></div></div>
+    <!-- Duplicate for seamless loop -->
+    <div class="marquee-card"><div class="mq-text">FlexDesk cut our scheduling time by 70%. We used to spend hours on the phone, now it's done in minutes.</div><div class="mq-author"><div class="mq-avatar" style="background:var(--violet)">AK</div><div><div class="mq-name">Alex K.</div><div class="mq-role">ProServ Solutions</div></div></div></div>
+    <div class="marquee-card"><div class="mq-text">The invoicing alone paid for itself. We get paid 3x faster than before. Customers love the online portal.</div><div class="mq-author"><div class="mq-avatar" style="background:var(--green)">LM</div><div><div class="mq-name">Lisa M.</div><div class="mq-role">GreenScape Lawns</div></div></div></div>
+    <div class="marquee-card"><div class="mq-text">We switched from Jobber and haven't looked back. The mobile app and offline mode are game-changers for rural areas.</div><div class="mq-author"><div class="mq-avatar" style="background:var(--blue)">RP</div><div><div class="mq-name">Ryan P.</div><div class="mq-role">AquaFix Plumbing</div></div></div></div>
+    <div class="marquee-card"><div class="mq-text">Best customer support I've ever experienced with a SaaS product. They helped us migrate 5,000 customer records.</div><div class="mq-author"><div class="mq-avatar" style="background:var(--orange)">JW</div><div><div class="mq-name">Jenny W.</div><div class="mq-role">Elite HVAC Services</div></div></div></div>
+    <div class="marquee-card"><div class="mq-text">Our technicians actually enjoy using FlexDesk. That never happened with our old system. Adoption was instant.</div><div class="mq-author"><div class="mq-avatar" style="background:var(--red)">MC</div><div><div class="mq-name">Marco C.</div><div class="mq-role">Rivera Electrical</div></div></div></div>
+    <div class="marquee-card"><div class="mq-text">Real-time GPS tracking gave us visibility we never had. Customers get accurate ETAs and love it.</div><div class="mq-author"><div class="mq-avatar" style="background:#ec4899">TH</div><div><div class="mq-name">Tanya H.</div><div class="mq-role">ShieldGuard Security</div></div></div></div>
+  </div>
+</section>
+
+<!-- ═══════════ CASE STUDY ═══════════ -->
+<section class="case-section" id="case-study">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="overline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Case Study</div>
+      <h2>Real results from <span class="gradient-text">real businesses</span></h2>
+    </div>
+    <div class="case-inner reveal">
+      <div class="case-visual">
+        <div class="case-visual-stat">
+          <div class="big">35%</div>
+          <div class="sub">Revenue Increase</div>
+        </div>
+      </div>
+      <div class="case-content">
+        <div class="case-badge">Success Story</div>
+        <h3>How ComfortPro HVAC grew revenue 35% in 6 months</h3>
+        <div class="case-company">ComfortPro HVAC &bull; 18 technicians &bull; Phoenix, AZ</div>
+        <blockquote>Before FlexDesk, we were juggling spreadsheets, phone calls, and paper invoices. Now everything runs from one dashboard. Our techs complete 40% more jobs per day and customers get same-day invoices. It transformed our business.</blockquote>
+        <div class="case-metrics">
+          <div class="case-metric"><div class="cm-val">40%</div><div class="cm-label">More Jobs/Day</div></div>
+          <div class="case-metric"><div class="cm-val">2.1 days</div><div class="cm-label">Avg. Payment Time</div></div>
+          <div class="case-metric"><div class="cm-val">98%</div><div class="cm-label">Customer Satisfaction</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SECURITY & TRUST ═══════════ -->
+<section class="trust-section" id="security">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="overline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Security</div>
+      <h2>Enterprise-grade <span class="gradient-text">security</span></h2>
+      <p>Your data is protected with the same security standards used by Fortune 500 companies.</p>
+    </div>
+    <div class="trust-badges reveal">
+      <div class="trust-badge">
+        <div class="trust-badge-icon" style="background:var(--violet-light);color:var(--violet)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <div class="tb-title">SOC 2 Type II</div>
+        <div class="tb-desc">Independently audited security controls</div>
+      </div>
+      <div class="trust-badge">
+        <div class="trust-badge-icon" style="background:var(--green-light);color:var(--green)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
+        <div class="tb-title">AES-256 Encryption</div>
+        <div class="tb-desc">Data encrypted at rest and in transit</div>
+      </div>
+      <div class="trust-badge">
+        <div class="trust-badge-icon" style="background:var(--blue-light);color:var(--blue)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></div>
+        <div class="tb-title">GDPR Compliant</div>
+        <div class="tb-desc">Full data protection compliance</div>
+      </div>
+      <div class="trust-badge">
+        <div class="trust-badge-icon" style="background:var(--orange-light);color:var(--orange)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <div class="tb-title">99.9% Uptime</div>
+        <div class="tb-desc">SLA-backed reliability guarantee</div>
+      </div>
+      <div class="trust-badge">
+        <div class="trust-badge-icon" style="background:var(--red-light);color:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4-4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+        <div class="tb-title">Row-Level Security</div>
+        <div class="tb-desc">Workspace-scoped data isolation</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ BLOG PREVIEW ═══════════ -->
+<section class="blog-section" id="blog">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="overline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg> From the Blog</div>
+      <h2>Resources &amp; <span class="gradient-text">insights</span></h2>
+    </div>
+    <div class="blog-grid">
+      <div class="blog-card reveal">
+        <div class="blog-card-img" style="background:linear-gradient(135deg,#ede9fe,#ddd6fe)">&#128200;</div>
+        <div class="blog-card-body">
+          <div class="blog-card-tag" style="background:var(--violet-light);color:var(--violet)">Growth</div>
+          <h3>7 KPIs Every Field Service Business Should Track in 2026</h3>
+          <p>The metrics that separate thriving businesses from struggling ones. Here's what to measure and why.</p>
+          <div class="blog-card-meta"><div class="bm-avatar" style="background:var(--violet)">PM</div><span>Alex D. &bull; 5 min read</span></div>
+        </div>
+      </div>
+      <div class="blog-card reveal reveal-delay-1">
+        <div class="blog-card-img" style="background:linear-gradient(135deg,#ecfdf5,#d1fae5)">&#128176;</div>
+        <div class="blog-card-body">
+          <div class="blog-card-tag" style="background:var(--green-light);color:var(--green)">Revenue</div>
+          <h3>How to Reduce Average Payment Time from 30 Days to 3</h3>
+          <p>Proven strategies for faster invoice collection that actually work for field service companies.</p>
+          <div class="blog-card-meta"><div class="bm-avatar" style="background:var(--green)">SK</div><span>Sarah K. &bull; 4 min read</span></div>
+        </div>
+      </div>
+      <div class="blog-card reveal reveal-delay-2">
+        <div class="blog-card-img" style="background:linear-gradient(135deg,#eff6ff,#dbeafe)">&#128736;</div>
+        <div class="blog-card-body">
+          <div class="blog-card-tag" style="background:var(--blue-light);color:var(--blue)">Operations</div>
+          <h3>The Complete Guide to Dispatch Optimization for HVAC Teams</h3>
+          <p>Route planning, skill matching, and the scheduling strategies that boost efficiency by 40%.</p>
+          <div class="blog-card-meta"><div class="bm-avatar" style="background:var(--blue)">JD</div><span>John D. &bull; 7 min read</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ APP DOWNLOAD ═══════════ -->
+<section class="app-section">
+  <div class="container">
+    <div class="app-inner reveal">
+      <div class="app-text">
+        <h3>Take FlexDesk<br>everywhere you go</h3>
+        <p>Your entire business in your pocket. View schedules, update job status, capture signatures, and invoice customers &mdash; all from the field. Works offline too.</p>
+        <div class="app-badges">
+          <div class="app-badge">
+            <svg viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83"/><path d="M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11"/></svg>
+            <div><div class="ab-text">Download on the</div><div class="ab-store">App Store</div></div>
+          </div>
+          <div class="app-badge">
+            <svg viewBox="0 0 24 24" fill="white"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-1.4l2.834 1.64a1 1 0 010 1.726l-2.834 1.64-2.536-2.536 2.536-2.47zM5.864 2.658L16.8 8.99l-2.302 2.302-8.635-8.635z"/></svg>
+            <div><div class="ab-text">Get it on</div><div class="ab-store">Google Play</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="app-phones">
+        <div class="app-phone">
+          <div class="app-phone-header">Dashboard</div>
+          <div class="app-phone-body">
+            <div class="app-phone-row active">&#9745; AC Repair 8AM</div>
+            <div class="app-phone-row active">&#9745; Plumbing 10:30AM</div>
+            <div class="app-phone-row">&#9744; Electrical 1PM</div>
+            <div class="app-phone-row">&#9744; HVAC Install 3PM</div>
+            <div style="margin-top:8px;padding:6px;background:rgba(16,185,129,.15);border-radius:6px;font-size:8px;color:var(--green);text-align:center;font-weight:600">2 of 4 Completed</div>
+          </div>
+        </div>
+        <div class="app-phone">
+          <div class="app-phone-header" style="background:var(--green)">Invoice</div>
+          <div class="app-phone-body">
+            <div style="font-size:8px;color:rgba(255,255,255,.4);margin-bottom:4px">INV-893</div>
+            <div style="font-size:14px;font-weight:800;color:white;margin-bottom:8px">$1,240</div>
+            <div class="app-phone-row">AC Compressor</div>
+            <div class="app-phone-row">Labor (2h)</div>
+            <div style="margin-top:8px;padding:6px;background:var(--violet);border-radius:6px;font-size:8px;color:white;text-align:center;font-weight:600">Send to Client</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ NEWSLETTER ═══════════ -->
+<section class="newsletter-section">
+  <div class="container">
+    <div class="newsletter-inner reveal">
+      <div class="newsletter-text">
+        <h3>Stay in the loop</h3>
+        <p>Get the latest field service tips, product updates, and industry insights delivered weekly.</p>
+      </div>
+      <div class="newsletter-form">
+        <input type="email" placeholder="Enter your email" id="nl-email">
+        <button class="btn-primary" onclick="this.textContent='Subscribed!';this.style.background='var(--green)';setTimeout(()=>{this.textContent='Subscribe';this.style.background=''},2000)">Subscribe</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FINAL CTA ═══════════ -->
+<section class="cta-section">
+  <div class="container">
+    <h2 class="reveal">Ready to transform your<br>field service operations?</h2>
+    <p class="reveal reveal-delay-1">Join 10,000+ businesses that trust FlexDesk to run their operations. Start your free trial today.</p>
+    <div class="cta-btns reveal reveal-delay-2">
+      <button class="cta-btn-white">Start Free Trial</button>
+      <button class="cta-btn-ghost">Talk to Sales</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="#" class="nav-logo" style="margin-bottom:4px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          <span style="font-size:16px">FlexDesk</span>
+        </a>
+        <p>The all-in-one platform for field service management. Dispatch, schedule, invoice, and grow.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="#">Features</a>
+        <a href="#">Pricing</a>
+        <a href="#">Integrations</a>
+        <a href="#">Mobile App</a>
+        <a href="#">API</a>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="#">About</a>
+        <a href="#">Blog</a>
+        <a href="#">Careers</a>
+        <a href="#">Press</a>
+        <a href="#">Contact</a>
+      </div>
+      <div class="footer-col">
+        <h4>Resources</h4>
+        <a href="#">Documentation</a>
+        <a href="#">Help Center</a>
+        <a href="#">Community</a>
+        <a href="#">Webinars</a>
+        <a href="#">Status</a>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+        <a href="#">Security</a>
+        <a href="#">GDPR</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 FlexDesk, Inc. All rights reserved.</span>
+      <div class="footer-socials">
+        <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg></a>
+        <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-4 0v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+        <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/></svg></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ── Scroll Progress ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement.scrollHeight - window.innerHeight;
+  document.getElementById('scroll-prog').style.width = (window.scrollY / h * 100) + '%';
+});
+
+// ── Nav scroll effect ──
+window.addEventListener('scroll', () => {
+  document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 20);
+});
+
+// ── Reveal on Scroll ──
+const revealObs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); } });
+}, { threshold:.12 });
+document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+// ── Smooth anchor scroll ──
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute('href'));
+    if(target) target.scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+});
+
+// ── Animated Stats ──
+const statObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting) {
+      e.target.querySelectorAll('[data-count]').forEach(el => {
+        const target = parseInt(el.dataset.count);
+        const suffix = el.dataset.suffix || '';
+        let cur = 0;
+        const step = Math.max(1, Math.ceil(target / 50));
+        const timer = setInterval(() => {
+          cur += step;
+          if(cur >= target) { cur = target; clearInterval(timer); }
+          el.textContent = (target >= 1000 ? cur.toLocaleString() : cur) + (cur === target ? suffix : '');
+        }, 25);
+      });
+      statObs.unobserve(e.target);
+    }
+  });
+}, { threshold:.3 });
+document.querySelectorAll('.stats-grid').forEach(el => statObs.observe(el));
+
+// ── Mockup Chart Bars ──
+(function() {
+  const chart = document.getElementById('mockup-chart');
+  if(!chart) return;
+  const heights = [45,62,38,78,55,90,68,82,72,58,85,95];
+  heights.forEach(h => {
+    const bar = document.createElement('div');
+    bar.className = 'mockup-chart-bar';
+    bar.style.height = h + '%';
+    chart.appendChild(bar);
+  });
+})();
+
+// ── Bento Chart ──
+(function() {
+  const chart = document.getElementById('bento-chart');
+  if(!chart) return;
+  const heights = [35,55,40,70,50,85,60,75,45,65];
+  heights.forEach(h => {
+    const bar = document.createElement('div');
+    bar.style.height = h + '%';
+    chart.appendChild(bar);
+  });
+})();
+
+// ── Pricing Toggle ──
+let wpYearly = false;
+const wpPrices = { starter:[29,23], pro:[49,39], ent:[99,79] };
+function toggleWebPricing() {
+  wpYearly = !wpYearly;
+  document.getElementById('p-pill').classList.toggle('yearly', wpYearly);
+  document.getElementById('p-monthly').classList.toggle('active', !wpYearly);
+  document.getElementById('p-yearly').classList.toggle('active', wpYearly);
+  const idx = wpYearly ? 1 : 0;
+  animWP('wp-starter', wpPrices.starter[idx]);
+  animWP('wp-pro', wpPrices.pro[idx]);
+  animWP('wp-ent', wpPrices.ent[idx]);
+}
+function animWP(id, target) {
+  const el = document.getElementById(id);
+  const cur = parseInt(el.textContent.replace('$',''));
+  const diff = target - cur;
+  let step = 0;
+  const timer = setInterval(() => {
+    step++;
+    el.textContent = '$' + Math.round(cur + diff * (step / 15));
+    if(step >= 15) clearInterval(timer);
+  }, 20);
+}
+
+// ── ROI Calculator ──
+function calcROI() {
+  const techs = parseInt(document.getElementById('roi-techs').value);
+  const jobs = parseInt(document.getElementById('roi-jobs').value);
+  const value = parseInt(document.getElementById('roi-value').value);
+  const admin = parseInt(document.getElementById('roi-admin').value);
+
+  document.getElementById('roi-techs-val').textContent = techs;
+  document.getElementById('roi-jobs-val').textContent = jobs;
+  document.getElementById('roi-value-val').textContent = '$' + value.toLocaleString();
+  document.getElementById('roi-admin-val').textContent = admin;
+
+  // Calculations
+  const timeSaved = Math.round(admin * 0.7 * 10) / 10; // 70% reduction
+  const missedJobRevenue = Math.round(jobs * 0.15 * value * 4.33); // 15% fewer missed, monthly
+  const fasterPayment = Math.round(missedJobRevenue * 0.35); // 35% of revenue from faster collection
+  const cost = techs <= 5 ? 29 : techs <= 25 ? 49 : 99;
+  const annualSavings = Math.round((missedJobRevenue + fasterPayment - cost) * 12);
+
+  document.getElementById('roi-res-time').textContent = timeSaved + ' hours';
+  document.getElementById('roi-res-revenue').textContent = '$' + missedJobRevenue.toLocaleString() + ' / mo';
+  document.getElementById('roi-res-payment').textContent = '$' + fasterPayment.toLocaleString() + ' / mo';
+  document.getElementById('roi-res-cost').textContent = '-$' + cost + ' / mo';
+  document.getElementById('roi-res-total').textContent = '$' + annualSavings.toLocaleString();
+}
+calcROI();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,382 @@
+# Progress: FlexDesk Mobile - Backend Integration and Production Ship
+
+## Learnings
+- Working directory: C:/Users/paulo/Desktop/Repositories/FlexDesk/packages/flexdesk-mobile/
+- Comprehensive API reference: FLEXDESK_MOBILE_PRD.md at repo root (100+ endpoints, auth flow, data models, sync architecture)
+- Design specs: SCREENS.md (screen layouts), DESIGN.md (component specs)
+- Theme tokens: src/theme/colors.ts, src/theme/tokens.ts, src/theme/index.ts
+- Components: src/components/ (MetricCircle, StatBubble, ClientCard, JobBlock, InvoiceRow, StatusPill, TipCard, FAB, SearchBar + barrel index.ts)
+- Screens: src/screens/ (DashboardScreen, ClientListScreen, JobCalendarScreen, InvoicingScreen)
+- Navigation: src/navigation/MainTabNavigator.tsx
+- Mock data: src/data/mockData.ts (to be replaced by API layer)
+- Entry: App.tsx with GestureHandlerRootView > SafeAreaProvider > AuthProvider > RootNavigator
+- Auth flow: AuthContext checks Keychain → GET /auth/me → refresh if needed → set user or clear tokens
+- App.tsx conditionally renders AuthNavigator (Login/Register) or MainTabNavigator based on isAuthenticated
+- Splash screen shown while auth state is loading (branded with FD logo + spinner)
+- Login/Register screens use useAuth().login() to update auth context (triggers navigator switch)
+- Deep linking OAuth uses setDeepLinkLoginHandler to wire into auth context
+- Backend: NestJS on Railway, REST at /api/v1, JWT auth (15min access, 7d refresh), workspace RLS
+- Auth endpoints: POST /login, POST /register, POST /exchange-code, POST /refresh, GET /me, POST /logout
+- Rate limiting: 100 req/60s global, 5 req/60s on auth
+- Job status machine: SCHEDULED then DISPATCHED then IN_PROGRESS then COMPLETED (ON_HOLD, CANCELLED branches)
+- Geofence: 500m radius required for DISPATCHED to IN_PROGRESS transition
+- No WebSocket gateway - use polling + push notifications
+- No file upload endpoint yet - needed for job photos
+- No DeviceToken model yet - needed for push notifications
+- Previous UI polish PRD (22 stories) had US-001 to US-013 completed (typecheck, null guards, imports, formatting, layouts, animations)
+- react-native-config Config export: `import Config from 'react-native-config'` — Config.API_URL etc.
+- Created stub tokenStorage.ts in src/auth/ that US-002 will replace with react-native-keychain
+- Typecheck passes cleanly with zero errors after US-001
+- WatermelonDB Model has built-in `syncStatus` accessor (type SyncStatus) — do NOT define sync_status column or syncStatus property on models. WatermelonDB manages `_status` and `_changed` columns internally.
+- Added experimentalDecorators + emitDecoratorMetadata to tsconfig.json for WatermelonDB decorators
+- DB files: src/db/schema.ts, src/db/models/*.ts, src/db/database.ts, src/db/index.ts
+
+## Completed
+- US-001: Create Axios API client with auth interceptor
+  - Created src/api/client.ts with Axios instance, baseURL from react-native-config
+  - Request interceptor attaches Bearer token from tokenStorage
+  - Response interceptor catches 401, refreshes token, queues concurrent 401s
+  - On refresh failure: clears tokens, navigates to Login via setNavigateToLogin()
+  - 15s default timeout, configurable per request
+  - Added axios + react-native-config to dependencies
+  - Created .env.development with API_URL=http://localhost:3001/api/v1
+  - Created stub src/auth/tokenStorage.ts for US-002 to flesh out
+  - Typecheck passes
+
+- US-002: Implement secure token storage with react-native-keychain
+  - Replaced stub tokenStorage.ts with real react-native-keychain implementation
+  - getTokens() reads from Keychain via getGenericPassword (accessToken=username, refreshToken=password)
+  - setTokens() stores via setGenericPassword with WHEN_UNLOCKED_THIS_DEVICE_ONLY accessibility
+  - clearTokens() calls resetGenericPassword
+  - Service name: com.flexdesk.mobile.auth
+  - Added react-native-keychain ^9.2.0 to package.json
+  - Typecheck passes
+
+- US-003: Build Login screen with email/password
+  - Created src/screens/LoginScreen.tsx
+  - FlexDesk logo (olive circle with "FD" initials), app name, tagline
+  - Email input: keyboardType="email-address", autoCapitalize="none", autoCorrect={false}, autoComplete="email"
+  - Password input: secureTextEntry with Show/Hide toggle button
+  - Login button calls POST /auth/login via apiClient, stores tokens on success
+  - Error states: 401 → "Invalid email or password", 429 → "Account locked for 15 minutes", else → network error
+  - Loading state: ActivityIndicator in button, inputs disabled
+  - Register link navigates to Register screen via NativeStackNavigationProp
+  - Uses KeyboardAvoidingView + ScrollView for keyboard handling
+  - All theme tokens from src/theme (brand, background, text, typography, spacing, radius, etc.)
+  - AuthStackParamList type defined for Login/Register navigation
+  - Typecheck passes with zero errors
+
+- US-004: Build Register screen with email/password
+  - Created src/screens/RegisterScreen.tsx matching LoginScreen visual style
+  - Full Name, Email, Password, Confirm Password fields
+  - Client-side validation: email regex, password min 8 chars, passwords match
+  - Register button calls POST /auth/register with { fullName, email, password }
+  - Handles both server response formats (access_token/refresh_token and accessToken/refreshToken)
+  - Error states: 409 (email exists), 400 (validation errors with server message), 429 (rate limit), network error
+  - Back to Login via navigation.goBack()
+  - Loading state: spinner in button, inputs disabled
+  - Show/Hide password toggle shared for both password fields
+  - Typecheck passes with zero errors
+
+- US-005: Add Google OAuth flow with deep linking
+  - Created src/auth/deepLinking.ts: extractOAuthCode(url), exchangeOAuthCode(code), handleDeepLink(url), getInitialDeepLink()
+  - extractOAuthCode parses flexdesk://auth/callback?code=XXXX URLs using URLSearchParams
+  - exchangeOAuthCode calls POST /auth/exchange-code, handles both response formats (access_token/accessToken)
+  - Updated App.tsx: added Linking.addEventListener for warm-start deep links
+  - Added getInitialDeepLink() call in useEffect for cold-start deep links
+  - Added NavigationContainer linking config with flexdesk:// prefix
+  - Updated LoginScreen.tsx: added "Sign in with Google" button with "or" divider
+  - Google button opens system browser via Linking.openURL to GET /auth/google
+  - googleLoading state with 30s timeout safety, both buttons mutually disabled during loading
+  - Styled Google button as outlined (white bg + border) to differentiate from primary Login
+  - Typecheck passes with zero errors
+
+- Phase 2 Task 1: Set up WatermelonDB schema and models
+  - Created src/db/schema.ts with appSchema v1: jobs, customers, invoices, properties, parts, sync_queue tables
+  - Created 6 model classes: Job, Customer, Invoice, Property, Part, SyncQueueItem in src/db/models/
+  - Models use @text, @field, @date, @readonly, @relation, @children decorators
+  - Job model has relations to customers and properties
+  - Customer model has children: jobs, invoices, properties
+  - Invoice model has relation to customers
+  - Property model has relation to customers
+  - sync_status NOT in schema/models — WatermelonDB manages _status internally
+  - sync_version and last_synced_at kept as custom fields for server sync versioning
+  - Created src/db/database.ts with SQLiteAdapter + Database instance
+  - Created barrel exports: src/db/models/index.ts, src/db/index.ts
+  - Added @nozbe/watermelondb ^0.27.1 to package.json
+  - Added experimentalDecorators + emitDecoratorMetadata to tsconfig.json
+  - Typecheck passes with zero errors
+
+- US-006: Add auth navigation guard
+  - Created src/auth/AuthContext.tsx with AuthProvider and useAuth hook
+  - AuthProvider bootstraps: checks Keychain → GET /auth/me → refresh if expired → set user or clear tokens
+  - useAuth() returns { user, isLoading, isAuthenticated, login, logout }
+  - Created src/auth/useAuth.ts as re-export for convenience
+  - Updated App.tsx: AuthProvider wraps RootNavigator, conditionally renders AuthNavigator or MainTabNavigator
+  - Splash screen with branded FD logo + ActivityIndicator shown during auth check
+  - AuthStack (Login/Register) created with createNativeStackNavigator
+  - Updated LoginScreen: uses auth.login() instead of setTokens() directly
+  - Updated RegisterScreen: uses auth.login() instead of setTokens() directly
+  - Updated deepLinking.ts: setDeepLinkLoginHandler() wires OAuth into auth context
+  - logout() calls POST /auth/logout, clears Keychain, sets user to null (triggers auth navigator)
+  - Typecheck passes with zero errors
+
+- US-007: Create API endpoint functions for all entities
+  - Created src/api/types.ts with all shared API types (AuthUser, Job, Customer, Invoice, Technician, Report types, enums, request/response shapes)
+  - Created src/api/auth.api.ts: login, register, exchangeCode, refresh, getMe, logout
+  - Created src/api/jobs.api.ts: createJob, listJobs, syncJobs(date), getScheduledJobs(range), getJobById, getJobDetails, updateJob, updateJobStatus, assignJob
+  - Created src/api/customers.api.ts: createCustomer, listCustomers(search), getCustomerById, getCustomerDetails, updateCustomer
+  - Created src/api/invoices.api.ts: createInvoiceFromJob, listInvoices(status), getInvoiceById, getInvoicesByCustomer, updateInvoiceStatus, sendInvoice, markInvoicePaid, getPaymentLink
+  - Created src/api/technicians.api.ts: getMe, getTechnicianById, updateProfile, updateLocation, updateAvailability, getNextJob
+  - Created src/api/reports.api.ts: getDashboard, getRevenue, getTechnicianPerformance
+  - All functions use apiClient from US-001 with proper TypeScript generic return types
+  - Axios errors propagate naturally (typed via AxiosError) for callers to handle
+  - Backend response format flexibility: auth types support both snake_case and camelCase token fields
+  - Typecheck passes with zero errors
+
+- US-008: Set up React Query for server state management
+  - Added @tanstack/react-query ^5.62.0 to package.json
+  - Created QueryClient in App.tsx with staleTime: 5 min, refetchOnWindowFocus: true
+  - Wrapped app with QueryClientProvider (outside SafeAreaProvider, inside GestureHandlerRootView)
+  - AppState listener triggers focusManager.setFocused() for React Native refetchOnFocus
+  - Created src/hooks/useJobs.ts: useJobs(date), useScheduledJobs(startDate, endDate), useJobDetails(id)
+  - Created src/hooks/useCustomers.ts: useCustomers(search), useCustomerDetails(id)
+  - Created src/hooks/useInvoices.ts: useInvoices(status)
+  - Created src/hooks/useDashboard.ts: useDashboard()
+  - Created src/hooks/mutations.ts: useUpdateJobStatus(), useCreateInvoice(), useCreateCustomer()
+  - Mutations invalidate related queryKeys on success (jobs, invoices, customers, dashboard)
+  - Created src/hooks/index.ts barrel export
+  - Typecheck passes with zero errors
+
+- US-009: Connect Dashboard screen to real API
+  - Replaced all mock data imports with useDashboard() React Query hook (GET /api/v1/reports/dashboard)
+  - Mapped DashboardSummary response to MetricCircle (jobMetrics.completed) and StatBubbles (active clients, pending jobs, unpaid invoices, weekly revenue)
+  - Added loading skeleton: circular ring placeholder + 4 card placeholders using skeleton.base color
+  - Added error state with warning icon, message, and Retry button that calls refetch()
+  - Pull-to-refresh via RefreshControl triggers refetch(); uses isRefetching for spinner state
+  - Created useNextJob(technicianId) hook in src/hooks/useNextJob.ts, exported from barrel
+  - Added "Next Up" widget showing next job title, time range, and address (from technicians/:id/next-job)
+  - Stale-while-revalidate: React Query shows cached data immediately while refetching in background
+  - User avatar initial derived from AuthContext user.fullName
+  - Typecheck passes with zero errors
+
+- US-010: Connect Client List screen to real API
+  - Replaced all mock data imports (customers, jobs, invoices, getJobsForCustomer, getInvoicesForCustomer) with useCustomers(search) React Query hook
+  - Search input debounced at 300ms via useRef timer — debouncedSearch drives the query key
+  - useCustomerDetails(expandedId) fetches GET /customers/:id/details when a card is expanded
+  - Expanded card shows: lastJobDate (from recentJobs), totalRevenue (sum of PAID invoices), completedJobCount (from recentJobs)
+  - Call action: Linking.openURL('tel:${phone}') — already in ClientCard
+  - Text/SMS action: added Linking.openURL('sms:${phone}') with 💬 icon in ClientCard expanded section
+  - Navigate action: opens Google Maps with primary property address via Linking.openURL (Platform.select for iOS maps: vs Google Maps URL)
+  - Added onNavigate prop to ClientCard, renders "Navigate" button in actions row when provided
+  - Loading skeleton: 5 card placeholders with avatar circle + text block shimmer
+  - Error state: ⚠️ icon, message, Retry button matching DashboardScreen pattern
+  - Pull-to-refresh via RefreshControl triggers refetch()
+  - Inline search spinner (ActivityIndicator) shown when fetching with existing data
+  - Typecheck passes with zero errors
+
+- US-011: Connect Job Calendar screen to real API
+  - Replaced all mock data imports (getJobsForDate, getCustomerById, getPropertyById, Job, JobStatus) with API hooks
+  - useJobs(selectedDateStr, { refetchInterval: 60000 }) for daily view with 1-min auto-refresh
+  - useScheduledJobs(weekStartStr, weekEndDate) for week strip dot indicators
+  - useJobDetails(selectedJobId) for bottom sheet with full relations (customer, technician, notes, parts)
+  - Week dots use getDotColorForJobs() with real weekJobs data, filtering by scheduledDate
+  - Day jobs sorted by scheduledStartTime in sortedDayJobs useMemo
+  - Loading skeleton: 3 card placeholders with status bar + content shimmer lines
+  - Error state: warning icon, message, Retry button (matching Dashboard pattern)
+  - Pull-to-refresh via RefreshControl on FlatList triggers refetchDay()
+  - Bottom sheet shows: loading indicator while fetching details, customer name from details, notes count + preview, parts count + preview
+  - Updated JobBlock.tsx to import JobStatus from '../api/types' instead of '../data/mockData'
+  - Updated useJobs hook to accept optional { refetchInterval } options
+  - Typecheck passes with zero errors
+
+- US-012: Connect Invoicing screen to real API
+  - Replaced all mock data imports (invoices, customers, getCustomerById, Invoice, InvoiceStatus) with API hooks
+  - useInvoices(statusParam) fetches GET /api/v1/invoices with optional status filter
+  - Filter chips updated to ALL, DRAFT, SENT, PAID, OVERDUE — each maps to API status param
+  - Outstanding summary computed from real data: sum of SENT + OVERDUE amounts for total, counts for pending/overdue
+  - Added useSendInvoice(), useMarkInvoicePaid(), useGetPaymentLink() mutation hooks in mutations.ts
+  - Invoice tap opens action sheet with context-dependent actions: Send (DRAFT), Mark Paid (SENT/OVERDUE), Share Payment Link (SENT/OVERDUE)
+  - Send Invoice calls POST /invoices/:id/send via useSendInvoice mutation
+  - Mark Paid calls POST /invoices/:id/mark-paid via useMarkInvoicePaid mutation
+  - Share Payment Link calls POST /invoices/:id/payment-link then opens RN Share sheet with URL
+  - Loading skeleton: summary card placeholder + 5 invoice row placeholders with text/pill shimmer
+  - Error state: error icon, message, Retry button matching Dashboard/ClientList pattern
+  - Pull-to-refresh via RefreshControl triggers refetch(), uses isRefetching for spinner state
+  - Updated InvoiceRow.tsx to import InvoiceStatus from api/types instead of data/mockData
+  - All mutations invalidate ['invoices'] and ['dashboard'] query keys on success
+  - Skeleton colors use skeletonColors.shimmer (not highlight — learned from typecheck error)
+  - Typecheck passes with zero errors
+
+- US-013: Build full-screen Job Detail screen
+  - Created src/screens/JobDetailScreen.tsx as a full-screen stack screen pushed on top of tab navigator
+  - Header: centered "Job Detail" title, back button (< Back), balanced with spacer
+  - Status + Priority row: StatusPill for job status + colored priority badge (LOW/MEDIUM/HIGH/URGENT)
+  - Customer section in card: name, phone (tap to call via Linking), email (tap to email), property address (tap to open Maps)
+  - Schedule section in card: formatted date (weekday, month, day, year), time range (12h format), estimated duration
+  - Notes section in card: list of notes with content, author name, timestamp; "Add Note" button (placeholder for US-015)
+  - Parts section in card: part name, quantity, unit price, line total per item; total row; "Add Part" button (placeholder for US-017)
+  - Photos section in card: thumbnail grid of attachments (placeholder icons); "Take Photo" button (placeholder for US-016)
+  - Status action bar at bottom: context-dependent buttons (Start Job, Complete Job, Put On Hold, Resume Job, Create Invoice)
+  - Primary action button (filled olive) + secondary action button (outlined olive)
+  - Loading skeleton state while data fetches
+  - Error state with retry button
+  - Pull-to-refresh via RefreshControl
+  - Data fetched from GET /api/v1/jobs/:id/details via useJobDetails hook
+  - Updated App.tsx: added MainStack navigator wrapping MainTabNavigator + JobDetailScreen
+  - Exported MainStackParamList type from App.tsx for navigation typing
+  - Updated JobCalendarScreen: added "View Full Details" button in bottom sheet → navigates to JobDetail
+  - Added useNavigation hook with NativeStackNavigationProp typing
+  - Typecheck passes with zero errors
+
+- US-014: Implement job status transitions with geofence validation
+  - Added react-native-geolocation-service ^5.3.1 to package.json
+  - Created src/utils/geofence.ts: haversineDistance(), checkGeofence(), GEOFENCE_RADIUS_M (500m)
+  - Created src/utils/jobTransitions.ts: VALID_TRANSITIONS map, getStatusActions() returning StatusAction[]
+  - StatusAction type: { label, targetStatus, variant (primary/secondary/destructive), requiresGeofence }
+  - VALID_TRANSITIONS: SCHEDULED/DISPATCHED → [IN_PROGRESS, CANCELLED], IN_PROGRESS → [COMPLETED, ON_HOLD, CANCELLED], ON_HOLD → [IN_PROGRESS, CANCELLED]
+  - Updated JobDetailScreen.tsx: replaced old string-based getStatusActions with VALID_TRANSITIONS-based version
+  - "Start Job" (SCHEDULED/DISPATCHED → IN_PROGRESS): Geolocation.getCurrentPosition + haversine check
+  - If within 500m: proceeds with PATCH /jobs/:id/status. If outside: shows alert with distance
+  - If job has no property lat/lng: allows start without geofence check
+  - "Complete Job" (IN_PROGRESS → COMPLETED): no geofence, calls status endpoint directly
+  - "Put On Hold" / "Resume Job": simple status transitions without geofence
+  - "Cancel Job": Alert.alert confirmation dialog with destructive style, then PATCH to CANCELLED
+  - Action buttons styled per variant: primary (filled olive), secondary (outlined olive), destructive (outlined red)
+  - transitionLoading state: shows ActivityIndicator in button, disables all action buttons during mutation
+  - Error handling: Alert.alert on mutation failure or location error
+  - Created src/types/react-native-geolocation-service.d.ts for typecheck without node_modules
+  - Typecheck passes with zero errors
+
+- US-015: Add job notes functionality
+  - Added addJobNote(id, content) API function in src/api/jobs.api.ts — calls PUT /jobs/:id with { notes: content }
+  - Created useAddJobNote() mutation hook in src/hooks/mutations.ts with full optimistic update
+  - Optimistic update: onMutate snapshots previous JobDetails, inserts temp note at top of notes array
+  - onError rolls back to snapshot; onSettled invalidates query to refetch server truth
+  - TContext type parameter { previous: JobDetails | undefined } needed for useMutation to type context in onError
+  - Added Modal + KeyboardAvoidingView to JobDetailScreen for "Add Note" bottom sheet
+  - TextInput: multiline, autoFocus, placeholder "Add a note about this job...", textAlignVertical="top"
+  - Save button disabled when text empty or mutation pending; shows ActivityIndicator during save
+  - Error: Alert.alert "Failed to save note" with Retry option that re-calls handleSaveNote
+  - Notes list sorted newest first via [...notes].sort() by createdAt descending
+  - Uses useAuth().user.fullName for optimistic note authorName
+  - Exported useAddJobNote from src/hooks/index.ts barrel
+  - Typecheck passes with zero errors
+
+- US-016: Add job photo capture and upload
+  - Added react-native-image-picker ^7.1.2 to package.json
+  - Created src/types/react-native-image-picker.d.ts type stub (launchCamera, launchImageLibrary, Asset, ImagePickerResponse)
+  - Added uploadJobAttachment(jobId, file, onProgress) in src/api/jobs.api.ts — POST /jobs/:id/attachments multipart/form-data with Axios onUploadProgress
+  - Created useUploadJobPhoto() mutation hook in src/hooks/mutations.ts — invalidates ['jobs', 'details', jobId] on success
+  - Exported useUploadJobPhoto from src/hooks/index.ts barrel
+  - Updated JobDetailScreen "Take Photo" button: Alert with Camera / Photo Library options
+  - Image picker options: maxWidth 1920, maxHeight 1920, quality 0.8 (JPEG 80% compression)
+  - Upload progress: horizontal progress bar with percentage text shown during upload
+  - Photos grid: Image components showing real attachment URLs from server
+  - Tap thumbnail opens full-screen Modal image viewer (fade animation, "Close" button, contain resizeMode)
+  - If backend returns 404 or network error: queues photo locally in pendingPhotos state with "Upload pending" badge overlay
+  - Pending photos show local URI thumbnail with semi-transparent "Pending" badge at bottom
+  - Error handling via processPhoto callback: 404/network → queue locally, other errors → Alert
+  - Typecheck passes with zero errors
+
+- US-017: Add parts tracking on jobs
+  - Added Part, JobPartTotals, AddJobPartRequest, UpdateJobPartRequest types to src/api/types.ts
+  - Created src/api/parts.api.ts: listParts(search), addJobPart, getJobPartTotals, updateJobPart, removeJobPart
+  - Created src/hooks/useParts.ts: useParts(search) and useJobPartTotals(jobId) query hooks
+  - Added useAddJobPart, useUpdateJobPart, useRemoveJobPart mutation hooks to src/hooks/mutations.ts
+  - All mutations invalidate ['jobs', 'details', jobId] and ['jobs', 'parts-totals', jobId] on success
+  - Updated hooks barrel export to include all new hooks
+  - Updated JobDetailScreen: "Add Part" button opens parts picker modal
+  - Parts picker modal has search input fetching GET /api/v1/parts with results list
+  - Selecting a part shows quantity input sub-view, then calls POST /jobs/:jobId/parts
+  - Parts list on job: each row shows name, qty @ unitPrice, lineTotal; tap adjusts qty, long-press removes
+  - Adjust quantity uses Alert.prompt (iOS) with fallback for Android
+  - Remove part shows Alert.alert confirmation dialog
+  - Totals section: cost, price, profit from GET /jobs/:jobId/parts/totals endpoint
+  - Fallback total row (sum of lineTotals) shown when totals endpoint not yet fetched
+  - Profit text colored: brand.olive (positive) or feedback.error (negative)
+  - Typecheck passes with zero errors
+
+- US-018: Implement Complete Job flow with auto-invoice
+  - Modified handleAction in JobDetailScreen to intercept COMPLETED transitions and show completion checklist modal
+  - Completion checklist modal shows 3 items: notes added, photos taken, parts logged (with counts and green check / warning icons)
+  - "Confirm & Complete" button triggers handleCompleteJob: PATCH /jobs/:id/status to COMPLETED, then POST /invoices/from-job/:jobId
+  - Added useCreateInvoice mutation hook (already existed in mutations.ts)
+  - Success modal: shows "Job Completed!" with invoice number and total amount (Invoice #{invoiceNumber} created for $X,XXX.XX)
+  - "View Invoice" button navigates to Tabs (Invoices tab)
+  - "Back to Schedule" button returns to tab navigator
+  - Invoice creation failure is non-blocking: warning message shown in amber, job still marked complete
+  - Loading overlay with spinner during completion flow
+  - All new styles: checklistSubtitle, checklistItem, checklistIcon, checklistText, checklistNote, completionOverlay, successCard, successIcon, successTitle, successMessage, successWarning, successActions, successBtnPrimary/Secondary
+  - Used feedback.offlineText (amber) for warning text since feedback.warning doesn't exist in theme
+  - Typecheck passes with zero errors
+
+- US-019: Set up WatermelonDB with schema
+  - Schema, models, and database instance were already created in an earlier iteration (Phase 2 Task 1)
+  - Added @nozbe/with-observables ^1.6.0 to package.json
+  - Created src/types/nozbe-watermelondb.d.ts with full type declarations for watermelondb, decorators, sqlite adapter, DatabaseProvider, and with-observables
+  - Wrapped app with DatabaseProvider in App.tsx (outermost after GestureHandlerRootView, wrapping QueryClientProvider)
+  - Import: DatabaseProvider from '@nozbe/watermelondb/DatabaseProvider', database from './src/db'
+  - Typecheck passes with zero errors
+
+- US-020: Implement sync pull (server to local)
+  - Created src/db/sync.ts with pullSync() function
+  - pullSync() fetches today's jobs (GET /jobs/sync?date=today), all customers (GET /customers), and recent invoices (GET /invoices) in parallel
+  - Upsert strategy: match by serverId, update existing records or insert new ones
+  - Each API call wrapped in .catch(() => []) so individual failures don't block other entities
+  - Created src/hooks/useSync.ts: useSync(enabled) hook with isSyncing, lastSyncedAt, lastSyncError, triggerSync
+  - Initial sync fires on mount when enabled=true (after auth)
+  - Background sync every 5 minutes via setInterval, only when app is in foreground (AppState === 'active')
+  - Re-syncs when app returns to foreground via AppState listener
+  - Sync guard prevents concurrent syncs via syncingRef
+  - Created src/hooks/SyncContext.tsx: SyncProvider + useSyncContext for app-wide sync state access
+  - Created src/components/SyncStatusBar.tsx: subtle bar showing "Last synced: X min ago" / "Syncing..." / "Sync failed"
+  - SyncStatusBar auto-updates every 30s to keep time-ago text fresh
+  - Updated App.tsx: MainNavigator wraps content with SyncProvider (enabled=true), SyncStatusBar renders above navigator
+  - MainNavigatorContent uses useSyncContext() to pass sync state to SyncStatusBar
+  - Added SyncStatusBar to components barrel export, useSync/SyncProvider/useSyncContext to hooks barrel export
+  - Typecheck passes with zero errors
+
+- US-021: Implement sync push (local to server)
+  - sync_queue table already existed in schema.ts and SyncQueueItem model from US-019
+  - Added pushSync() to src/db/sync.ts: queries sync_queue for PENDING items sorted by created_at ASC (FIFO)
+  - For each item: marks as PROCESSING, makes API call via apiClient.request(url, method, data)
+  - On 2xx success: removes item from queue via destroyPermanently()
+  - On 409: marks item as CONFLICT status (for US-023 conflict resolution UI)
+  - On 4xx (not 409): marks item as FAILED permanently
+  - On network error / 5xx: retries with exponential backoff (1s, 2s, 4s, 8s, 16s), max 5 retries
+  - After max retries: marks as FAILED
+  - Created enqueueMutation(endpoint, method, payload, entityType, entityId) helper for screens to queue offline mutations
+  - Created getPendingQueueCount() and getFailedQueueItems() query helpers
+  - QUEUE_STATUS constants: PENDING, PROCESSING, SYNCED, CONFLICT, FAILED
+  - Updated useSync hook: doSync() now calls pushSync() before pullSync() (push first, then pull)
+  - Added pendingQueueCount and lastPushResult to SyncState
+  - Queue count refreshes every 30s via dedicated interval
+  - Updated SyncStatusBar component to show pending queue count badge ("3 changes pending")
+  - Uses feedback.offlineText (amber) color for pending count text
+  - Updated App.tsx MainNavigatorContent to pass pendingQueueCount to SyncStatusBar
+  - Exported enqueueMutation, getPendingQueueCount, getFailedQueueItems, QUEUE_STATUS from hooks barrel
+  - Queue processing triggers on app foreground (via AppState listener) and every 5 min interval
+  - Typecheck passes with zero errors
+
+- US-022: Network detection and offline banner
+  - Added @react-native-community/netinfo ^11.4.1 to package.json
+  - Created src/types/react-native-community-netinfo.d.ts type declarations (NetInfoState, addEventListener, fetch)
+  - Created src/store/networkStore.ts: NetworkContext, useNetwork() hook, useNetworkStore() hook
+  - Uses React context + state (not Zustand) matching project patterns — avoids extra dependency
+  - NetInfo.addEventListener tracks isConnected && isInternetReachable for online status
+  - Offline-to-online transition triggers pushSync() then pullSync() then refreshPendingCount()
+  - wasOnlineRef tracks previous state to detect transition direction
+  - Pending queue count polled every 30s via setInterval
+  - Created src/components/OfflineBanner.tsx: yellow banner (feedback.offlineBanner) when offline
+  - Offline state: "You are offline" text + pending count badge (amber circle with white number)
+  - Syncing-after-reconnect state: ActivityIndicator + "Syncing N changes..." text
+  - Banner auto-hides when sync completes (isSyncingAfterReconnect resets to false)
+  - Updated App.tsx: NetworkProvider wraps inside QueryClientProvider (wraps SafeAreaProvider)
+  - OfflineBanner rendered in MainNavigatorContent above SyncStatusBar and navigator
+  - Exported OfflineBanner from src/components/index.ts barrel
+  - Exported useNetwork + NetworkState from src/hooks/index.ts barrel
+  - All screens can access network state via useNetwork() hook
+  - Typecheck passes with zero errors
+
+---

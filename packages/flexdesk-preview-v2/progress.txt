@@ -1,0 +1,14 @@
+# FlexDesk Preview v2 -- Deployment Readiness Progress
+
+## Completed
+- US-001: Build-Time Environment Validation
+  - Added envValidationPlugin() to vite.config.ts (buildStart hook, checks process.env.VITE_API_URL when NODE_ENV=production)
+  - Plugin only runs in production mode (spread into plugins array conditionally)
+  - Updated .env.example with comment that VITE_API_URL is required for production
+  - Replaced console.warn in env.ts with comment about build-time enforcement
+  - Typecheck passes cleanly
+
+## Learnings
+- vite.config.ts uses defineConfig(({ mode }) => ...) pattern, so mode is available for conditional plugin inclusion
+- Env vars at build time are accessed via process.env (Node), not import.meta.env (browser runtime)
+- Typecheck command: pnpm --filter @flexdesk/preview-v2 typecheck

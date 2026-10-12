@@ -1,0 +1,69 @@
+.company-profile-bg {
+  /* Remove background and padding - MainLayout handles this */
+  min-height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.company-profile-section {
+  position: relative;
+  padding-left: 0;
+  transition: padding-left 0.2s ease;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  /* Ensure all content is properly contained */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Subtle hover effect with better positioning */
+.company-profile-section:hover {
+  padding-left: 4px;
+}
+
+.company-profile-section::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, #3b82f6 0%, #1e40af 100%);
+  border-radius: 0 2px 2px 0;
+  opacity: 0;
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.company-profile-section:hover::before {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+/* Ensure grid and form fields don't overflow */
+.company-profile-section .grid,
+.company-profile-section .grid > * {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Ensure all direct children of the section respect boundaries */
+.company-profile-section > * {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Ensure text doesn't overflow */
+.company-profile-bg * {
+  max-width: 100%;
+}
+
+/* Fix for long text in form fields */
+.company-profile-bg input,
+.company-profile-bg textarea {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}

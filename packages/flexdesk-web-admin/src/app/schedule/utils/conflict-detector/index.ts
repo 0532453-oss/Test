@@ -1,0 +1,1 @@
+// Conflict detector utility

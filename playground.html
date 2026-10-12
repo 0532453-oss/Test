@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlexDesk — The Playground</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+  :root {
+    --bg: #06060a;
+    --surface: #0d0d14;
+    --surface-2: #141422;
+    --border: #1c1c30;
+    --text: #f0f0f8;
+    --text-2: #a0a0c0;
+    --text-3: #5c5c80;
+    --accent: #6c5ce7;
+    --accent-l: #a29bfe;
+    --green: #00d2a0;
+    --blue: #4dabf7;
+    --orange: #ff8b3e;
+    --pink: #f06595;
+    --red: #ff5555;
+    --yellow: #ffd43b;
+    --cyan: #22d3ee;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  /* ── Ambient background ── */
+  body::before {
+    content: ''; position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(circle at 30% 20%, rgba(108,92,231,.06) 0%, transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(0,210,160,.04) 0%, transparent 50%);
+    animation: ambientDrift 30s ease-in-out infinite alternate;
+    pointer-events: none; z-index: 0;
+  }
+  @keyframes ambientDrift {
+    0% { transform: translate(0,0) scale(1); }
+    100% { transform: translate(-5%,3%) scale(1.05); }
+  }
+
+  .page { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 60px 40px 120px; }
+
+  /* ── Hero ── */
+  .hero { text-align: center; margin-bottom: 80px; }
+  .hero h1 {
+    font-size: 56px; font-weight: 900; letter-spacing: -2px;
+    background: linear-gradient(135deg, var(--text) 0%, var(--text-2) 50%, var(--accent-l) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; line-height: 1.1; margin-bottom: 16px;
+  }
+  .hero p { font-size: 18px; color: var(--text-3); font-weight: 400; letter-spacing: -.2px; }
+
+  .section-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px;
+    color: var(--text-3); margin-bottom: 32px; padding-left: 2px;
+  }
+  .section { margin-bottom: 100px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px; }
+
+  /* ═══════════════════════════════════════════════════════
+     1. SPOTLIGHT CARDS — cursor-tracking radial glow
+     ═══════════════════════════════════════════════════════ */
+  .spotlight-card {
+    position: relative; padding: 32px; border-radius: 16px;
+    background: var(--surface); border: 1px solid var(--border);
+    overflow: hidden; transition: border-color .3s;
+  }
+  .spotlight-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(600px circle at var(--mx) var(--my), rgba(108,92,231,.08), transparent 40%);
+    opacity: 0; transition: opacity .4s; pointer-events: none;
+  }
+  .spotlight-card:hover { border-color: rgba(108,92,231,.3); }
+  .spotlight-card:hover::before { opacity: 1; }
+  .spotlight-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; position: relative; }
+  .spotlight-card p { font-size: 13px; color: var(--text-2); line-height: 1.7; position: relative; }
+  .spotlight-icon {
+    width: 44px; height: 44px; border-radius: 12px; margin-bottom: 20px;
+    display: grid; place-items: center; font-size: 20px; position: relative;
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     2. HOLOGRAPHIC CARDS — rainbow shimmer on tilt
+     ═══════════════════════════════════════════════════════ */
+  .holo-card {
+    position: relative; padding: 28px; border-radius: 16px;
+    background: linear-gradient(145deg, #111122, #0d0d18);
+    border: 1px solid rgba(255,255,255,.06);
+    transform-style: preserve-3d; perspective: 800px;
+    transition: transform .15s ease-out, box-shadow .3s;
+    cursor: pointer;
+  }
+  .holo-card:hover { box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+  .holo-card .holo-sheen {
+    position: absolute; inset: 0; border-radius: inherit;
+    background: linear-gradient(
+      125deg,
+      transparent 0%, transparent 25%,
+      rgba(108,92,231,.08) 30%, rgba(0,210,160,.06) 35%,
+      rgba(240,101,149,.06) 40%, rgba(77,171,247,.06) 45%,
+      transparent 50%, transparent 100%
+    );
+    background-size: 250% 250%;
+    opacity: 0; transition: opacity .3s;
+    pointer-events: none; mix-blend-mode: screen;
+  }
+  .holo-card:hover .holo-sheen { opacity: 1; }
+  .holo-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; position: relative; z-index: 1; }
+  .holo-card p { font-size: 12px; color: var(--text-2); line-height: 1.6; position: relative; z-index: 1; }
+  .holo-stat {
+    font-size: 36px; font-weight: 900; letter-spacing: -2px;
+    background: linear-gradient(135deg, var(--text), var(--accent-l));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; margin-bottom: 4px; position: relative; z-index: 1;
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     3. FLIP CARDS — 3D flip reveal
+     ═══════════════════════════════════════════════════════ */
+  .flip-card { perspective: 1000px; height: 220px; cursor: pointer; }
+  .flip-inner {
+    position: relative; width: 100%; height: 100%;
+    transition: transform .6s cubic-bezier(.4,0,.2,1);
+    transform-style: preserve-3d;
+  }
+  .flip-card.flipped .flip-inner { transform: rotateY(180deg); }
+  .flip-front, .flip-back {
+    position: absolute; inset: 0; border-radius: 16px;
+    backface-visibility: hidden; padding: 28px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .flip-front {
+    background: var(--surface); border: 1px solid var(--border);
+  }
+  .flip-back {
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    transform: rotateY(180deg); color: #fff;
+  }
+  .flip-front h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+  .flip-front p { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+  .flip-hint { font-size: 11px; color: var(--text-3); margin-top: 16px; }
+  .flip-back h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+  .flip-back p { font-size: 13px; opacity: .85; line-height: 1.6; }
+
+  /* ═══════════════════════════════════════════════════════
+     4. AURORA CARDS — living gradient background
+     ═══════════════════════════════════════════════════════ */
+  .aurora-card {
+    position: relative; padding: 32px; border-radius: 20px;
+    overflow: hidden; min-height: 200px;
+    display: flex; flex-direction: column; justify-content: flex-end;
+  }
+  .aurora-bg {
+    position: absolute; inset: -50%; width: 200%; height: 200%;
+    background: conic-gradient(from 0deg at 50% 50%,
+      rgba(108,92,231,.3), rgba(0,210,160,.2), rgba(240,101,149,.2),
+      rgba(77,171,247,.2), rgba(108,92,231,.3));
+    animation: auroraRotate 12s linear infinite;
+    filter: blur(60px); opacity: .5;
+  }
+  @keyframes auroraRotate { to { transform: rotate(360deg); } }
+  .aurora-card::after {
+    content: ''; position: absolute; inset: 1px; border-radius: inherit;
+    background: rgba(6,6,10,.85);
+  }
+  .aurora-card h3 { font-size: 22px; font-weight: 800; position: relative; z-index: 1; margin-bottom: 8px; }
+  .aurora-card p { font-size: 13px; color: var(--text-2); position: relative; z-index: 1; line-height: 1.7; }
+  .aurora-card .btn-aurora {
+    position: relative; z-index: 1; margin-top: 20px; align-self: flex-start;
+    padding: 10px 24px; border-radius: 10px; border: 1px solid rgba(255,255,255,.15);
+    background: rgba(255,255,255,.06); color: #fff; font-family: inherit;
+    font-size: 13px; font-weight: 600; cursor: pointer; backdrop-filter: blur(10px);
+    transition: all .2s;
+  }
+  .aurora-card .btn-aurora:hover { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.25); }
+
+  /* ═══════════════════════════════════════════════════════
+     5. NUMBER TICKER — odometer animation
+     ═══════════════════════════════════════════════════════ */
+  .ticker-card {
+    padding: 28px; border-radius: 16px;
+    background: var(--surface); border: 1px solid var(--border);
+    text-align: center;
+  }
+  .ticker-wrap {
+    display: inline-flex; gap: 2px; overflow: hidden; height: 52px;
+    margin-bottom: 8px;
+  }
+  .ticker-digit {
+    width: 32px; height: 52px; overflow: hidden; position: relative;
+    background: var(--surface-2); border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .ticker-strip {
+    position: absolute; top: 0; left: 0; width: 100%;
+    transition: transform 1.5s cubic-bezier(.2,.8,.3,1);
+    will-change: transform;
+  }
+  .ticker-num {
+    height: 52px; display: grid; place-items: center;
+    font-size: 28px; font-weight: 800; letter-spacing: -1px;
+  }
+  .ticker-sep { display: grid; place-items: center; font-size: 28px; font-weight: 800; color: var(--text-3); width: 14px; }
+  .ticker-label { font-size: 12px; color: var(--text-3); font-weight: 500; }
+
+  /* ═══════════════════════════════════════════════════════
+     6. STACKED DECK — swipeable card stack
+     ═══════════════════════════════════════════════════════ */
+  .deck-wrap { position: relative; height: 280px; width: 100%; }
+  .deck-card {
+    position: absolute; left: 50%; width: 320px; padding: 28px;
+    border-radius: 16px; background: var(--surface); border: 1px solid var(--border);
+    cursor: grab; transition: all .4s cubic-bezier(.4,0,.2,1);
+    transform-origin: bottom center; user-select: none;
+  }
+  .deck-card:active { cursor: grabbing; }
+  .deck-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .deck-card p { font-size: 13px; color: var(--text-2); line-height: 1.6; margin-bottom: 12px; }
+  .deck-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: .5px; }
+  .deck-nav { text-align: center; margin-top: 16px; display: flex; gap: 8px; justify-content: center; }
+  .deck-dot {
+    width: 8px; height: 8px; border-radius: 50%; border: none;
+    background: var(--border); cursor: pointer; transition: all .3s;
+  }
+  .deck-dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+  /* ═══════════════════════════════════════════════════════
+     7. PARTICLE BUTTON — explodes on click
+     ═══════════════════════════════════════════════════════ */
+  .particle-btn {
+    position: relative; padding: 14px 32px; border-radius: 12px; border: none;
+    font-family: inherit; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: all .2s; overflow: visible;
+  }
+  .particle-btn.purple { background: var(--accent); color: #fff; box-shadow: 0 4px 20px rgba(108,92,231,.3); }
+  .particle-btn.green { background: var(--green); color: #fff; box-shadow: 0 4px 20px rgba(0,210,160,.3); }
+  .particle-btn.orange { background: var(--orange); color: #fff; box-shadow: 0 4px 20px rgba(255,139,62,.3); }
+  .particle-btn.pink { background: var(--pink); color: #fff; box-shadow: 0 4px 20px rgba(240,101,149,.3); }
+  .particle-btn:hover { transform: translateY(-2px); filter: brightness(1.15); }
+  .particle-btn:active { transform: scale(.95); }
+  .particle {
+    position: absolute; width: 8px; height: 8px; border-radius: 50%;
+    pointer-events: none; animation: particleFly .8s ease-out forwards;
+  }
+  @keyframes particleFly {
+    0% { opacity: 1; transform: translate(0,0) scale(1); }
+    100% { opacity: 0; transform: translate(var(--px), var(--py)) scale(0); }
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     8. macOS DOCK MAGNIFICATION
+     ═══════════════════════════════════════════════════════ */
+  .dock {
+    display: flex; align-items: flex-end; justify-content: center;
+    gap: 4px; padding: 12px 16px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 20px; backdrop-filter: blur(20px);
+    width: fit-content; margin: 0 auto;
+  }
+  .dock-item {
+    width: 48px; height: 48px; border-radius: 12px;
+    display: grid; place-items: center; font-size: 24px;
+    transition: all .15s ease-out; cursor: pointer;
+    position: relative;
+  }
+  .dock-item:hover { transform: scale(1.1); }
+  .dock-tooltip {
+    position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+    background: var(--surface-2); border: 1px solid var(--border);
+    padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
+    white-space: nowrap; opacity: 0; transition: opacity .15s; pointer-events: none;
+  }
+  .dock-item:hover .dock-tooltip { opacity: 1; }
+
+  /* ═══════════════════════════════════════════════════════
+     9. COMMAND PALETTE — ⌘K style
+     ═══════════════════════════════════════════════════════ */
+  .cmd-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,.6); backdrop-filter: blur(8px);
+    display: none; place-items: center; opacity: 0;
+    transition: opacity .2s;
+  }
+  .cmd-overlay.open { display: grid; opacity: 1; }
+  .cmd-palette {
+    width: 560px; max-height: 420px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,.6);
+    animation: cmdSlideIn .2s ease-out;
+  }
+  @keyframes cmdSlideIn { 0% { transform: translateY(-20px) scale(.97); opacity: 0; } }
+  .cmd-input-wrap {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+  }
+  .cmd-input-wrap svg { color: var(--text-3); flex-shrink: 0; }
+  .cmd-input {
+    flex: 1; background: none; border: none; color: var(--text);
+    font-family: inherit; font-size: 15px; outline: none;
+  }
+  .cmd-input::placeholder { color: var(--text-3); }
+  .cmd-kbd {
+    font-size: 10px; padding: 2px 6px; border-radius: 4px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    color: var(--text-3); font-family: inherit;
+  }
+  .cmd-results { padding: 8px; max-height: 340px; overflow-y: auto; }
+  .cmd-group-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-3); padding: 8px 12px 4px; }
+  .cmd-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 10px; cursor: pointer; transition: background .1s;
+  }
+  .cmd-item:hover, .cmd-item.active { background: rgba(108,92,231,.1); }
+  .cmd-item-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: grid; place-items: center; font-size: 15px;
+    background: var(--surface-2); border: 1px solid var(--border);
+  }
+  .cmd-item-text { flex: 1; }
+  .cmd-item-text h4 { font-size: 13px; font-weight: 600; }
+  .cmd-item-text p { font-size: 11px; color: var(--text-3); }
+  .cmd-item-shortcut { font-size: 11px; color: var(--text-3); }
+
+  /* ═══════════════════════════════════════════════════════
+     10. TOAST NOTIFICATIONS
+     ═══════════════════════════════════════════════════════ */
+  .toast-container {
+    position: fixed; bottom: 24px; right: 24px; z-index: 900;
+    display: flex; flex-direction: column-reverse; gap: 8px;
+  }
+  .toast {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 18px; border-radius: 12px; min-width: 300px;
+    background: var(--surface); border: 1px solid var(--border);
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+    animation: toastIn .4s cubic-bezier(.2,.8,.3,1);
+    transition: all .3s;
+  }
+  .toast.removing { animation: toastOut .3s ease-in forwards; }
+  @keyframes toastIn { 0% { transform: translateX(100%) scale(.9); opacity: 0; } }
+  @keyframes toastOut { 100% { transform: translateX(100%) scale(.9); opacity: 0; } }
+  .toast-icon { font-size: 18px; flex-shrink: 0; }
+  .toast-body { flex: 1; }
+  .toast-body h4 { font-size: 13px; font-weight: 600; }
+  .toast-body p { font-size: 11px; color: var(--text-3); }
+  .toast-close {
+    width: 24px; height: 24px; border-radius: 6px; border: none;
+    background: transparent; color: var(--text-3); cursor: pointer;
+    display: grid; place-items: center; font-size: 14px;
+    transition: all .15s;
+  }
+  .toast-close:hover { background: var(--surface-2); color: var(--text); }
+  .toast-progress {
+    position: absolute; bottom: 0; left: 0; height: 2px; border-radius: 0 0 12px 12px;
+    animation: toastTimer 4s linear forwards;
+  }
+  @keyframes toastTimer { 0% { width: 100%; } 100% { width: 0; } }
+
+  /* ═══════════════════════════════════════════════════════
+     11. MORPHING EXPAND CARD
+     ═══════════════════════════════════════════════════════ */
+  .morph-card {
+    padding: 24px; border-radius: 16px;
+    background: var(--surface); border: 1px solid var(--border);
+    cursor: pointer; transition: all .5s cubic-bezier(.4,0,.2,1);
+    overflow: hidden; max-height: 140px; position: relative;
+  }
+  .morph-card.expanded {
+    max-height: 500px;
+    border-color: rgba(108,92,231,.3);
+    box-shadow: 0 12px 40px rgba(0,0,0,.3);
+  }
+  .morph-card .morph-preview { transition: opacity .3s; }
+  .morph-card.expanded .morph-preview { opacity: 0; height: 0; }
+  .morph-card .morph-full {
+    opacity: 0; transition: opacity .3s .2s; pointer-events: none;
+  }
+  .morph-card.expanded .morph-full { opacity: 1; pointer-events: auto; }
+  .morph-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .morph-card p { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+  .morph-expand-hint {
+    position: absolute; bottom: 12px; right: 16px;
+    font-size: 10px; color: var(--text-3); transition: opacity .3s;
+  }
+  .morph-card.expanded .morph-expand-hint { opacity: 0; }
+
+  /* ═══════════════════════════════════════════════════════
+     12. LIQUID BLOB BUTTONS — organic morphing shape
+     ═══════════════════════════════════════════════════════ */
+  .blob-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+  .blob-btn {
+    position: relative; z-index: 2;
+    padding: 14px 32px; border: none; border-radius: 12px;
+    background: transparent; color: #fff;
+    font-family: inherit; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: transform .2s;
+  }
+  .blob-btn:hover { transform: scale(1.05); }
+  .blob-shape {
+    position: absolute; inset: -8px; z-index: 1;
+    border-radius: 50%; filter: blur(0px);
+    animation: blobMorph 4s ease-in-out infinite;
+  }
+  @keyframes blobMorph {
+    0%,100% { border-radius: 42% 58% 54% 46% / 48% 44% 56% 52%; }
+    25% { border-radius: 54% 46% 42% 58% / 56% 52% 48% 44%; }
+    50% { border-radius: 48% 52% 58% 42% / 44% 56% 46% 54%; }
+    75% { border-radius: 52% 48% 46% 54% / 58% 42% 52% 48%; }
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     HELPERS
+     ═══════════════════════════════════════════════════════ */
+  .flex-center { display: flex; align-items: center; justify-content: center; gap: 24px; flex-wrap: wrap; }
+  .mt-16 { margin-top: 16px; }
+</style>
+
+<!-- SVG filter for gooey effect -->
+<svg style="position:absolute;width:0;height:0">
+  <filter id="goo"><feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/><feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo"/></filter>
+</svg>
+
+</head>
+<body>
+
+<div class="page">
+
+  <div class="hero">
+    <h1>The Playground</h1>
+    <p>Components that breathe. Press <kbd style="padding:3px 8px;border-radius:6px;background:var(--surface-2);border:1px solid var(--border);font-family:inherit;font-size:14px">&#8984;K</kbd> to try the command palette.</p>
+  </div>
+
+  <!-- 1. SPOTLIGHT CARDS -->
+  <div class="section">
+    <div class="section-label">Spotlight Cards &mdash; move your cursor</div>
+    <div class="grid-3">
+      <div class="spotlight-card" data-spotlight>
+        <div class="spotlight-icon" style="background:rgba(108,92,231,.12)">&#128640;</div>
+        <h3>Smart Scheduling</h3>
+        <p>AI assigns the right tech to the right job based on skills, proximity, and availability.</p>
+      </div>
+      <div class="spotlight-card" data-spotlight>
+        <div class="spotlight-icon" style="background:rgba(0,210,160,.12)">&#9889;</div>
+        <h3>Real-Time Sync</h3>
+        <p>Offline-first with IndexedDB. Works in basements and dead zones. Syncs when you surface.</p>
+      </div>
+      <div class="spotlight-card" data-spotlight>
+        <div class="spotlight-icon" style="background:rgba(255,139,62,.12)">&#128274;</div>
+        <h3>Data Isolation</h3>
+        <p>Every query is scoped to your workspace. Prisma RLS ensures zero data leakage between tenants.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. HOLOGRAPHIC TILT CARDS -->
+  <div class="section">
+    <div class="section-label">Holographic Cards &mdash; hover &amp; tilt</div>
+    <div class="grid-4">
+      <div class="holo-card" data-holo>
+        <div class="holo-sheen"></div>
+        <div class="holo-stat">1,284</div>
+        <h3>Active Jobs</h3>
+        <p style="color:var(--green);font-size:12px;font-weight:600">+12.5% from last month</p>
+      </div>
+      <div class="holo-card" data-holo>
+        <div class="holo-sheen"></div>
+        <div class="holo-stat">$48.2K</div>
+        <h3>Revenue</h3>
+        <p style="color:var(--green);font-size:12px;font-weight:600">+8.3% from last month</p>
+      </div>
+      <div class="holo-card" data-holo>
+        <div class="holo-sheen"></div>
+        <div class="holo-stat">362</div>
+        <h3>Customers</h3>
+        <p style="color:var(--blue);font-size:12px;font-weight:600">28 new this month</p>
+      </div>
+      <div class="holo-card" data-holo>
+        <div class="holo-sheen"></div>
+        <div class="holo-stat">96.4%</div>
+        <h3>Satisfaction</h3>
+        <p style="color:var(--accent-l);font-size:12px;font-weight:600">4.9 avg rating</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. FLIP CARDS -->
+  <div class="section">
+    <div class="section-label">Flip Cards &mdash; click to reveal</div>
+    <div class="grid-3">
+      <div class="flip-card" onclick="this.classList.toggle('flipped')">
+        <div class="flip-inner">
+          <div class="flip-front">
+            <div style="font-size:32px;margin-bottom:12px">&#128188;</div>
+            <h3>Job Management</h3>
+            <p>Create, assign, track, and close jobs with a single workflow.</p>
+            <div class="flip-hint">Click to flip &rarr;</div>
+          </div>
+          <div class="flip-back">
+            <h3>Under the hood</h3>
+            <p>22 NestJS modules with workspace-scoped RLS. Real-time updates via WebSocket. Full audit trail on every state change.</p>
+          </div>
+        </div>
+      </div>
+      <div class="flip-card" onclick="this.classList.toggle('flipped')">
+        <div class="flip-inner">
+          <div class="flip-front">
+            <div style="font-size:32px;margin-bottom:12px">&#129302;</div>
+            <h3>AI Agent</h3>
+            <p>24/7 customer communication. Answers calls, books appointments, follows up.</p>
+            <div class="flip-hint">Click to flip &rarr;</div>
+          </div>
+          <div class="flip-back">
+            <h3>Under the hood</h3>
+            <p>Twilio voice &amp; SMS integration. Google Calendar sync. Airtable CRM. Conversation memory. HVAC-specific prompt engineering.</p>
+          </div>
+        </div>
+      </div>
+      <div class="flip-card" onclick="this.classList.toggle('flipped')">
+        <div class="flip-inner">
+          <div class="flip-front">
+            <div style="font-size:32px;margin-bottom:12px">&#128176;</div>
+            <h3>Invoicing</h3>
+            <p>Generate, send, and track invoices. Stripe integration for online payments.</p>
+            <div class="flip-hint">Click to flip &rarr;</div>
+          </div>
+          <div class="flip-back">
+            <h3>Under the hood</h3>
+            <p>Stripe checkout sessions. Automated payment reminders via AI agent. PDF generation with custom branding. Multi-currency support.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. AURORA CARDS -->
+  <div class="section">
+    <div class="section-label">Aurora Cards &mdash; living borders</div>
+    <div class="grid-2">
+      <div class="aurora-card">
+        <div class="aurora-bg"></div>
+        <h3>Dispatch Dashboard</h3>
+        <p>Real-time map. Live technician pins. Drag a job onto a tech and watch it route automatically.</p>
+        <button class="btn-aurora">Open Dashboard &rarr;</button>
+      </div>
+      <div class="aurora-card">
+        <div class="aurora-bg" style="animation-direction:reverse"></div>
+        <h3>Analytics Suite</h3>
+        <p>Revenue trends, technician performance, customer acquisition costs. All in one glance.</p>
+        <button class="btn-aurora">View Reports &rarr;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. NUMBER TICKERS -->
+  <div class="section">
+    <div class="section-label">Number Tickers &mdash; click to randomize</div>
+    <div class="grid-3">
+      <div class="ticker-card" onclick="randomizeTicker(this, 'revenue')">
+        <div class="ticker-wrap" data-ticker="48250">
+          <!-- digits injected by JS -->
+        </div>
+        <div class="ticker-label">Monthly Revenue</div>
+      </div>
+      <div class="ticker-card" onclick="randomizeTicker(this, 'jobs')">
+        <div class="ticker-wrap" data-ticker="01284">
+        </div>
+        <div class="ticker-label">Jobs Completed</div>
+      </div>
+      <div class="ticker-card" onclick="randomizeTicker(this, 'rating')">
+        <div class="ticker-wrap" data-ticker="00496">
+        </div>
+        <div class="ticker-label">Avg. Rating (4.96)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. STACKED DECK -->
+  <div class="section">
+    <div class="section-label">Stacked Deck &mdash; click to cycle</div>
+    <div class="deck-wrap" id="deck" onclick="cycleDeck()">
+      <div class="deck-card" style="background:linear-gradient(145deg,#111128,#0d0d18)">
+        <div style="font-size:24px;margin-bottom:10px">&#128736;</div>
+        <h3>HVAC Repair — Emergency</h3>
+        <p>No cooling. Compressor may need full replacement. Priority same-day.</p>
+        <span class="deck-tag" style="background:rgba(255,85,85,.12);color:var(--red)">Urgent</span>
+      </div>
+      <div class="deck-card" style="background:linear-gradient(145deg,#111128,#0d0d18)">
+        <div style="font-size:24px;margin-bottom:10px">&#128167;</div>
+        <h3>Plumbing — Water Heater</h3>
+        <p>Replace 40-gal gas heater with tankless. Customer pre-approved estimate.</p>
+        <span class="deck-tag" style="background:rgba(77,171,247,.12);color:var(--blue)">Scheduled</span>
+      </div>
+      <div class="deck-card" style="background:linear-gradient(145deg,#111128,#0d0d18)">
+        <div style="font-size:24px;margin-bottom:10px">&#9889;</div>
+        <h3>Electrical — Panel Upgrade</h3>
+        <p>100A to 200A panel upgrade for EV charger support. Permit required.</p>
+        <span class="deck-tag" style="background:rgba(0,210,160,.12);color:var(--green)">Estimate</span>
+      </div>
+      <div class="deck-card" style="background:linear-gradient(145deg,#111128,#0d0d18)">
+        <div style="font-size:24px;margin-bottom:10px">&#127968;</div>
+        <h3>HVAC — Seasonal Maintenance</h3>
+        <p>Annual tune-up and filter replacement. Recurring quarterly schedule.</p>
+        <span class="deck-tag" style="background:rgba(108,92,231,.12);color:var(--accent-l)">Recurring</span>
+      </div>
+    </div>
+    <div class="deck-nav" id="deck-nav"></div>
+  </div>
+
+  <!-- 7. PARTICLE BUTTONS -->
+  <div class="section">
+    <div class="section-label">Particle Buttons &mdash; click &amp; watch them explode</div>
+    <div class="flex-center">
+      <button class="particle-btn purple" onclick="explode(this,'#6c5ce7')">Create Job</button>
+      <button class="particle-btn green" onclick="explode(this,'#00d2a0')">Send Invoice</button>
+      <button class="particle-btn orange" onclick="explode(this,'#ff8b3e')">Dispatch</button>
+      <button class="particle-btn pink" onclick="explode(this,'#f06595')">Book Appointment</button>
+    </div>
+  </div>
+
+  <!-- 8. LIQUID BLOB BUTTONS -->
+  <div class="section">
+    <div class="section-label">Liquid Blob Buttons &mdash; organic &amp; alive</div>
+    <div class="flex-center">
+      <div class="blob-wrap">
+        <div class="blob-shape" style="background:var(--accent)"></div>
+        <button class="blob-btn">Schedule</button>
+      </div>
+      <div class="blob-wrap">
+        <div class="blob-shape" style="background:var(--green);animation-delay:-.5s"></div>
+        <button class="blob-btn">Confirm</button>
+      </div>
+      <div class="blob-wrap">
+        <div class="blob-shape" style="background:var(--pink);animation-delay:-1s"></div>
+        <button class="blob-btn">Assign Tech</button>
+      </div>
+      <div class="blob-wrap">
+        <div class="blob-shape" style="background:var(--orange);animation-delay:-1.5s"></div>
+        <button class="blob-btn">Route</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. macOS DOCK -->
+  <div class="section">
+    <div class="section-label">Dock &mdash; macOS magnification</div>
+    <div class="dock" id="dock">
+      <div class="dock-item" style="background:rgba(108,92,231,.15)"><span class="dock-tooltip">Dashboard</span>&#128202;</div>
+      <div class="dock-item" style="background:rgba(0,210,160,.15)"><span class="dock-tooltip">Jobs</span>&#128188;</div>
+      <div class="dock-item" style="background:rgba(77,171,247,.15)"><span class="dock-tooltip">Schedule</span>&#128197;</div>
+      <div class="dock-item" style="background:rgba(255,139,62,.15)"><span class="dock-tooltip">Customers</span>&#128101;</div>
+      <div class="dock-item" style="background:rgba(240,101,149,.15)"><span class="dock-tooltip">Invoices</span>&#128176;</div>
+      <div class="dock-item" style="background:rgba(255,85,85,.15)"><span class="dock-tooltip">Maps</span>&#127758;</div>
+      <div class="dock-item" style="background:rgba(34,211,238,.15)"><span class="dock-tooltip">Agent</span>&#129302;</div>
+      <div class="dock-item" style="background:rgba(255,212,59,.15)"><span class="dock-tooltip">Settings</span>&#9881;</div>
+    </div>
+  </div>
+
+  <!-- 10. MORPHING EXPAND CARDS -->
+  <div class="section">
+    <div class="section-label">Morphing Cards &mdash; click to expand</div>
+    <div class="grid-2">
+      <div class="morph-card" onclick="this.classList.toggle('expanded')">
+        <div class="morph-preview">
+          <h3>&#128736; HVAC Repair #1284</h3>
+          <p>Johnson Residence &middot; AC not cooling</p>
+        </div>
+        <div class="morph-full">
+          <h3>&#128736; HVAC Repair #1284</h3>
+          <p style="margin-bottom:12px">Johnson Residence &middot; 142 Oak Street, Apt 3B</p>
+          <p style="margin-bottom:12px"><strong>Issue:</strong> AC unit blowing warm air. Likely compressor failure. Customer has been without cooling for 2 days.</p>
+          <p style="margin-bottom:12px"><strong>Assigned:</strong> John Davis &middot; ETA 25 min</p>
+          <p style="margin-bottom:12px"><strong>Parts:</strong> Compressor unit (in van), refrigerant R-410A</p>
+          <p><strong>Estimate:</strong> $1,840 (approved)</p>
+        </div>
+        <span class="morph-expand-hint">Click to expand</span>
+      </div>
+      <div class="morph-card" onclick="this.classList.toggle('expanded')">
+        <div class="morph-preview">
+          <h3>&#128167; Plumbing Estimate #542</h3>
+          <p>Davis Property &middot; Kitchen remodel</p>
+        </div>
+        <div class="morph-full">
+          <h3>&#128167; Plumbing Estimate #542</h3>
+          <p style="margin-bottom:12px">Davis Commercial &middot; 890 Industrial Blvd</p>
+          <p style="margin-bottom:12px"><strong>Scope:</strong> Full kitchen plumbing relocation. New dishwasher line, sink repositioning, gas line for range.</p>
+          <p style="margin-bottom:12px"><strong>Status:</strong> Awaiting customer approval</p>
+          <p style="margin-bottom:12px"><strong>Timeline:</strong> 3-4 business days</p>
+          <p><strong>Estimate:</strong> $4,200</p>
+        </div>
+        <span class="morph-expand-hint">Click to expand</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST TRIGGERS -->
+  <div class="section">
+    <div class="section-label">Toast Notifications &mdash; fire them</div>
+    <div class="flex-center">
+      <button class="particle-btn purple" onclick="fireToast('success','Job completed','HVAC repair #1284 marked as done')">Success Toast</button>
+      <button class="particle-btn orange" onclick="fireToast('warning','Rate limit warning','Google Maps API at 85% daily quota')">Warning Toast</button>
+      <button class="particle-btn pink" onclick="fireToast('error','Payment failed','Card ending 4242 was declined')">Error Toast</button>
+      <button class="particle-btn green" onclick="fireToast('info','New booking','Mrs. Chen confirmed Thursday at 2 PM')">Info Toast</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- COMMAND PALETTE -->
+<div class="cmd-overlay" id="cmd-overlay" onclick="if(event.target===this)closePalette()">
+  <div class="cmd-palette">
+    <div class="cmd-input-wrap">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input class="cmd-input" id="cmd-input" placeholder="Type a command..." autofocus>
+      <span class="cmd-kbd">ESC</span>
+    </div>
+    <div class="cmd-results" id="cmd-results">
+      <div class="cmd-group-label">Actions</div>
+      <div class="cmd-item active"><div class="cmd-item-icon">&#128188;</div><div class="cmd-item-text"><h4>Create New Job</h4><p>Start a new service request</p></div><div class="cmd-item-shortcut">&#8984;N</div></div>
+      <div class="cmd-item"><div class="cmd-item-icon">&#128176;</div><div class="cmd-item-text"><h4>Send Invoice</h4><p>Generate and email an invoice</p></div><div class="cmd-item-shortcut">&#8984;I</div></div>
+      <div class="cmd-item"><div class="cmd-item-icon">&#128197;</div><div class="cmd-item-text"><h4>Open Schedule</h4><p>View today's calendar</p></div><div class="cmd-item-shortcut">&#8984;S</div></div>
+      <div class="cmd-group-label">Navigation</div>
+      <div class="cmd-item"><div class="cmd-item-icon">&#128202;</div><div class="cmd-item-text"><h4>Dashboard</h4><p>Overview and analytics</p></div></div>
+      <div class="cmd-item"><div class="cmd-item-icon">&#128101;</div><div class="cmd-item-text"><h4>Customers</h4><p>Manage customer database</p></div></div>
+      <div class="cmd-item"><div class="cmd-item-icon">&#129302;</div><div class="cmd-item-text"><h4>AI Agent Settings</h4><p>Configure the 24/7 assistant</p></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ── 1. SPOTLIGHT CARDS ──────────────────────────────────
+document.querySelectorAll('[data-spotlight]').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const r = card.getBoundingClientRect();
+    card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+    card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+  });
+});
+
+// ── 2. HOLOGRAPHIC TILT ─────────────────────────────────
+document.querySelectorAll('[data-holo]').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const r = card.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - .5;
+    const y = (e.clientY - r.top) / r.height - .5;
+    card.style.transform = `perspective(800px) rotateY(${x * 12}deg) rotateX(${-y * 12}deg) scale(1.02)`;
+    const sheen = card.querySelector('.holo-sheen');
+    sheen.style.backgroundPosition = `${50 + x * 100}% ${50 + y * 100}%`;
+  });
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = '';
+  });
+});
+
+// ── 5. NUMBER TICKERS ───────────────────────────────────
+function initTickers() {
+  document.querySelectorAll('.ticker-wrap').forEach(wrap => {
+    const val = wrap.dataset.ticker;
+    wrap.innerHTML = '';
+    val.split('').forEach((d, i) => {
+      const digit = document.createElement('div');
+      digit.className = 'ticker-digit';
+      let strip = '<div class="ticker-strip">';
+      for (let n = 0; n <= 9; n++) strip += `<div class="ticker-num">${n}</div>`;
+      strip += '</div>';
+      digit.innerHTML = strip;
+      wrap.appendChild(digit);
+      if (i === val.length - 4) {
+        const sep = document.createElement('div');
+        sep.className = 'ticker-sep';
+        sep.textContent = ',';
+        wrap.appendChild(sep);
+      }
+      setTimeout(() => {
+        digit.querySelector('.ticker-strip').style.transform = `translateY(-${parseInt(d) * 52}px)`;
+      }, 100 + i * 100);
+    });
+  });
+}
+initTickers();
+
+function randomizeTicker(card, type) {
+  const wrap = card.querySelector('.ticker-wrap');
+  let num;
+  if (type === 'revenue') num = String(30000 + Math.floor(Math.random() * 40000)).padStart(5, '0');
+  else if (type === 'jobs') num = String(1000 + Math.floor(Math.random() * 500)).padStart(5, '0');
+  else num = '00' + String(450 + Math.floor(Math.random() * 50));
+  wrap.dataset.ticker = num;
+  const digits = wrap.querySelectorAll('.ticker-digit');
+  const chars = num.split('');
+  let di = 0;
+  for (let i = 0; i < wrap.children.length; i++) {
+    const child = wrap.children[i];
+    if (child.classList.contains('ticker-digit')) {
+      const s = child.querySelector('.ticker-strip');
+      s.style.transform = `translateY(-${parseInt(chars[di]) * 52}px)`;
+      di++;
+    }
+  }
+}
+
+// ── 6. STACKED DECK ─────────────────────────────────────
+let deckIndex = 0;
+const deckCards = document.querySelectorAll('.deck-card');
+const deckNav = document.getElementById('deck-nav');
+
+function layoutDeck() {
+  deckCards.forEach((c, i) => {
+    const offset = i - deckIndex;
+    const absOff = Math.abs(offset);
+    if (absOff > 2) { c.style.display = 'none'; return; }
+    c.style.display = '';
+    c.style.zIndex = deckCards.length - absOff;
+    c.style.transform = `translateX(-50%) translateY(${offset * 8}px) scale(${1 - absOff * .05})`;
+    c.style.opacity = offset === 0 ? 1 : .4 - absOff * .15;
+    c.style.filter = offset === 0 ? '' : 'blur(1px)';
+  });
+  // update dots
+  deckNav.innerHTML = '';
+  deckCards.forEach((_, i) => {
+    const dot = document.createElement('button');
+    dot.className = 'deck-dot' + (i === deckIndex ? ' active' : '');
+    dot.onclick = e => { e.stopPropagation(); deckIndex = i; layoutDeck(); };
+    deckNav.appendChild(dot);
+  });
+}
+function cycleDeck() { deckIndex = (deckIndex + 1) % deckCards.length; layoutDeck(); }
+layoutDeck();
+
+// ── 7. PARTICLE EXPLOSION ───────────────────────────────
+function explode(btn, color) {
+  const rect = btn.getBoundingClientRect();
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('span');
+    p.className = 'particle';
+    const angle = (Math.PI * 2 * i) / 20 + (Math.random() - .5) * .5;
+    const dist = 40 + Math.random() * 60;
+    p.style.cssText = `
+      left:50%;top:50%;background:${color};
+      --px:${Math.cos(angle) * dist}px;
+      --py:${Math.sin(angle) * dist}px;
+      width:${4 + Math.random() * 6}px;
+      height:${4 + Math.random() * 6}px;
+    `;
+    btn.appendChild(p);
+    p.addEventListener('animationend', () => p.remove());
+  }
+}
+
+// ── 8. DOCK MAGNIFICATION ───────────────────────────────
+const dock = document.getElementById('dock');
+const dockItems = dock.querySelectorAll('.dock-item');
+
+dock.addEventListener('mousemove', e => {
+  dockItems.forEach(item => {
+    const r = item.getBoundingClientRect();
+    const center = r.left + r.width / 2;
+    const dist = Math.abs(e.clientX - center);
+    const scale = Math.max(1, 1.5 - dist / 120);
+    item.style.transform = `scale(${scale})`;
+    item.style.width = `${48 * scale}px`;
+    item.style.height = `${48 * scale}px`;
+  });
+});
+dock.addEventListener('mouseleave', () => {
+  dockItems.forEach(item => {
+    item.style.transform = '';
+    item.style.width = '';
+    item.style.height = '';
+  });
+});
+
+// ── 9. COMMAND PALETTE ──────────────────────────────────
+const cmdOverlay = document.getElementById('cmd-overlay');
+
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openPalette(); }
+  if (e.key === 'Escape') closePalette();
+});
+
+function openPalette() {
+  cmdOverlay.classList.add('open');
+  setTimeout(() => document.getElementById('cmd-input').focus(), 50);
+}
+function closePalette() { cmdOverlay.classList.remove('open'); }
+
+// Filter
+document.getElementById('cmd-input').addEventListener('input', e => {
+  const q = e.target.value.toLowerCase();
+  document.querySelectorAll('.cmd-item').forEach(item => {
+    const text = item.textContent.toLowerCase();
+    item.style.display = text.includes(q) ? '' : 'none';
+  });
+});
+
+// ── 10. TOAST NOTIFICATIONS ─────────────────────────────
+function fireToast(type, title, msg) {
+  const container = document.getElementById('toast-container');
+  const icons = { success: '&#10003;', warning: '&#9888;', error: '&#10007;', info: '&#8505;' };
+  const colors = { success: 'var(--green)', warning: 'var(--orange)', error: 'var(--red)', info: 'var(--blue)' };
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.innerHTML = `
+    <span class="toast-icon" style="color:${colors[type]}">${icons[type]}</span>
+    <div class="toast-body"><h4>${title}</h4><p>${msg}</p></div>
+    <button class="toast-close" onclick="removeToast(this.parentElement)">&times;</button>
+    <div class="toast-progress" style="background:${colors[type]}"></div>
+  `;
+  container.appendChild(toast);
+  setTimeout(() => removeToast(toast), 4000);
+}
+
+function removeToast(toast) {
+  if (!toast.parentElement) return;
+  toast.classList.add('removing');
+  setTimeout(() => toast.remove(), 300);
+}
+</script>
+
+</body>
+</html>

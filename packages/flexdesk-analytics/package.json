@@ -1,0 +1,6 @@
+{
+  "name": "@service-flex/analytics",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Analytics and event tracking for Service Flex"
+}

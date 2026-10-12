@@ -1,0 +1,328 @@
+packages/
+├── create-service-flex-app/
+│   └── package.json
+├── service-flex-analytics/
+│   ├── package.json
+│   └── src/
+│       ├── events/
+│       │   ├── job-completion/
+│       │   │   └── index.ts
+│       │   ├── quote-acceptance/
+│       │   │   └── index.ts
+│       │   └── technician-location/
+│       │       └── index.ts
+│       └── providers/
+│           └── index.ts
+├── service-flex-cli/
+│   └── package.json
+├── service-flex-client-hub/
+│   └── src/
+│       ├── components/
+│       │   └── index.ts
+│       └── pages/
+│           ├── approve-quote/
+│           │   └── index.ts
+│           ├── booking-request/
+│           │   └── index.ts
+│           ├── pay-invoice/
+│           │   └── index.ts
+│           └── TrackTechnicianPage.tsx
+├── service-flex-components/
+│   └── src/
+│       ├── calendar/
+│       │   ├── day-view/
+│       │   │   └── index.ts
+│       │   ├── month-view/
+│       │   │   └── index.ts
+│       │   └── week-view/
+│       │       └── index.ts
+│       ├── data-display/
+│       │   ├── geofence-indicator/
+│       │   ├── invoice-card/
+│       │   ├── job-card/
+│       │   ├── job-map/
+│       │   ├── job-status-badge/
+│       │   ├── payment-status-badge/
+│       │   ├── price-breakdown-table/
+│       │   │   └── index.ts
+│       │   ├── route-optimizer/
+│       │   ├── technician-card/
+│       │   ├── technician-location/
+│       │   ├── technician-location-map/
+│       │   └── technician-schedule/
+│       ├── inputs/
+│       │   ├── address-picker/
+│       │   │   └── index.ts
+│       │   ├── invoice-form/
+│       │   ├── job-completion-form/
+│       │   ├── line-item-input/
+│       │   │   └── index.ts
+│       │   └── time-picker/
+│       │       └── index.ts
+│       └── layout/
+│           ├── page-header/
+│           │   └── index.ts
+│           └── side-navigation/
+├── service-flex-core/
+│   └── src/
+│       ├── constants/
+│       │   ├── currencies/
+│       │   │   └── index.ts
+│       │   ├── recurrence-patterns/
+│       │   │   └── index.ts
+│       │   └── tax-rates/
+│       │       └── index.ts
+│       ├── hooks/
+│       │   ├── useCreateOneRecord.ts
+│       │   ├── useFindManyRecords.ts
+│       │   ├── useFindOneRecord.ts
+│       │   ├── useSyncStatus.ts
+│       │   └── useUpdateOneRecord.ts
+│       ├── package.json
+│       └── utils/
+│           ├── currency-formatter/
+│           │   └── index.ts
+│           └── date-time/
+│               └── index.ts
+├── service-flex-maps/
+│   ├── package.json
+│   └── src/
+│       ├── geocoding/
+│       │   └── index.ts
+│       └── route-optimization/
+│           └── tsp-solver/
+│               └── index.ts
+├── service-flex-mobile-app/
+│   ├── assets/
+│   │   └── .gitkeep
+│   └── src/
+│       ├── features/
+│       │   ├── clock-in/
+│       │   │   └── index.ts
+│       │   ├── hooks/
+│       │   │   ├── useCurrentTechnician.ts
+│       │   │   ├── useLocationTracker.ts
+│       │   │   └── useTechnicianLocation.ts
+│       │   ├── job-runner/
+│       │   │   ├── attachments/
+│       │   │   │   └── index.ts
+│       │   │   ├── checklist/
+│       │   │   │   └── index.ts
+│       │   │   ├── CurrentJobPage.tsx
+│       │   │   ├── hooks/
+│       │   │   │   └── useTechnicianJobs.ts
+│       │   │   └── timer/
+│       │   │       └── index.ts
+│       │   ├── my-schedule/
+│       │   │   ├── hooks/
+│       │   │   │   ├── useSyncTechnicianSchedule.ts
+│       │   │   │   └── useTechnicianSchedule.ts
+│       │   │   └── TechnicianSchedulePage.tsx
+│       │   ├── offline-mode/
+│       │   │   └── index.ts
+│       │   └── TechnicianDashboardPage.tsx
+│       └── navigation/
+│           └── index.ts
+├── service-flex-server/
+│   ├── package.json
+│   ├── prisma/
+│   │   └── schema.prisma
+│   ├── scripts/
+│   │   └── pdf-generator/
+│   │       └── index.ts
+│   └── src/
+│       ├── app.module.ts
+│       ├── config/
+│       │   └── index.ts
+│       ├── database/
+│       │   ├── prisma.service.ts
+│       │   ├── workspace-context.ts
+│       │   └── workspace-middleware.ts
+│       ├── engine/
+│       │   └── base.service.ts
+│       ├── modules/
+│       │   ├── api/
+│       │   │   ├── client/
+│       │   │   │   ├── apiClient.ts
+│       │   │   │   └── apiConfig.ts
+│       │   │   ├── storage/
+│       │   │   │   ├── IndexedDBClient.ts
+│       │   │   │   ├── middleware.ts
+│       │   │   │   └── StorageAdapter.ts
+│       │   │   ├── sync/
+│       │   │   │   ├── SyncManager.ts
+│       │   │   │   └── types/
+│       │   │   │       └── SyncOperation.ts
+│       │   │   └── sync-engine/
+│       │   │       ├── ScheduleSync.ts
+│       │   │       ├── SyncEngine.ts
+│       │   │       ├── SyncFilters.ts
+│       │   │       └── SyncStrategy.ts
+│       │   ├── auth/
+│       │   │   └── index.ts
+│       │   ├── billing/
+│       │   │   ├── api/
+│       │   │   │   ├── invoiceApi.ts
+│       │   │   │   └── stripeApi.ts
+│       │   │   ├── billing.service.ts
+│       │   │   └── types/
+│       │   │       ├── Invoice.ts
+│       │   │       └── Payment.ts
+│       │   ├── clients/
+│       │   │   └── entities/
+│       │   │       └── index.ts
+│       │   ├── communication/
+│       │   │   ├── email/
+│       │   │   │   └── index.ts
+│       │   │   └── sms/
+│       │   │       └── index.ts
+│       │   ├── jobs/
+│       │   │   ├── api/
+│       │   │   │   ├── jobApi.ts
+│       │   │   │   └── jobEndpoints.ts
+│       │   │   ├── controllers/
+│       │   │   │   ├── job.controller.ts
+│       │   │   │   └── recurrence.controller.ts
+│       │   │   ├── dto/
+│       │   │   │   ├── recurrence.dto.ts
+│       │   │   │   └── update-job-status.dto.ts
+│       │   │   ├── job.service.ts
+│       │   │   ├── services/
+│       │   │   │   └── recurrence-engine/
+│       │   │   │       └── recurrence.service.ts
+│       │   │   ├── states/
+│       │   │   │   └── jobStatusState.ts
+│       │   │   ├── types/
+│       │   │   │   ├── Job.ts
+│       │   │   │   └── JobStatus.ts
+│       │   │   └── utils/
+│       │   │       ├── computeJobDuration.ts
+│       │   │       ├── geofenceValidator.ts
+│       │   │       ├── jobStatusMachine.ts
+│       │   │       └── validateJobTransition.ts
+│       │   ├── notifications/
+│       │   │   └── notification.service.ts
+│       │   ├── object-record/
+│       │   │   └── types/
+│       │   │       ├── BaseObjectRecord.ts
+│       │   │       └── ObjectRecord.ts
+│       │   ├── quotes/
+│       │   │   └── services/
+│       │   │       └── margin-calculator/
+│       │   │           └── index.ts
+│       │   ├── schedule/
+│       │   │   └── services/
+│       │   │       └── availability-checker/
+│       │   │           └── index.ts
+│       │   └── technician/
+│       │       ├── api/
+│       │       │   └── technicianApi.ts
+│       │       ├── controllers/
+│       │       │   ├── public-tracking.controller.ts
+│       │       │   └── technician.controller.ts
+│       │       ├── technician.service.ts
+│       │       └── types/
+│       │           └── Technician.ts
+│       ├── shared/
+│       │   └── pdf-templates/
+│       │       ├── invoice.hbs
+│       │       ├── quote.hbs
+│       │       └── work-order.hbs
+│       ├── types/
+│       │   └── google-maps.d.ts
+│       └── utils/
+│           ├── crypto.ts
+│           └── workspace.interceptor.ts
+├── service-flex-web-admin/
+│   └── src/
+│       ├── app/
+│       │   ├── clients/
+│       │   │   ├── components/
+│       │   │   │   ├── client-details-card/
+│       │   │   │   │   └── index.ts
+│       │   │   │   └── property-list/
+│       │   │   │       └── index.ts
+│       │   │   └── hooks/
+│       │   │       └── import-export/
+│       │   │           └── index.ts
+│       │   ├── invoices/
+│       │   │   ├── batch-actions/
+│       │   │   │   └── index.ts
+│       │   │   ├── components/
+│       │   │   │   ├── invoice-builder/
+│       │   │   │   │   └── index.ts
+│       │   │   │   └── payment-modal/
+│       │   │   │       └── index.ts
+│       │   │   ├── hooks/
+│       │   │   │   ├── useCreateInvoice.ts
+│       │   │   │   ├── useInvoiceGeneration.ts
+│       │   │   │   ├── useInvoiceStatus.ts
+│       │   │   │   ├── useSendInvoice.ts
+│       │   │   │   └── useStripePayment.ts
+│       │   │   ├── InvoiceShowPage.tsx
+│       │   │   ├── InvoicesIndexPage.tsx
+│       │   │   └── reminders/
+│       │   │       └── index.ts
+│       │   ├── jobs/
+│       │   │   ├── components/
+│       │   │   │   ├── job-card/
+│       │   │   │   │   └── index.ts
+│       │   │   │   └── visit-list/
+│       │   │   │       └── index.ts
+│       │   │   ├── hooks/
+│       │   │   │   ├── index.ts
+│       │   │   │   ├── useCreateJob.ts
+│       │   │   │   ├── useFindManyJobs.ts
+│       │   │   │   ├── useFindOneJob.ts
+│       │   │   │   ├── useGeocode.ts
+│       │   │   │   ├── useJobFilters.ts
+│       │   │   │   ├── useJobGeofence.ts
+│       │   │   │   ├── useJobStatus.ts
+│       │   │   │   ├── useJobStatusTransition.ts
+│       │   │   │   ├── useRouteCalculation.ts
+│       │   │   │   └── useUpdateJob.ts
+│       │   │   ├── JobCreatePage.tsx
+│       │   │   ├── JobShowPage.tsx
+│       │   │   ├── JobsIndexPage.tsx
+│       │   │   ├── one-off-jobs/
+│       │   │   │   └── index.ts
+│       │   │   └── recurring-contracts/
+│       │   │       └── index.ts
+│       │   ├── quotes/
+│       │   │   ├── components/
+│       │   │   │   ├── deposit-calculator/
+│       │   │   │   │   └── index.ts
+│       │   │   │   └── signature-box/
+│       │   │   │       └── index.ts
+│       │   │   └── templates/
+│       │   │       └── index.ts
+│       │   └── schedule/
+│       │       ├── components/
+│       │       │   ├── dispatch-grid/
+│       │       │   │   └── index.ts
+│       │       │   ├── map-view/
+│       │       │   │   └── index.ts
+│       │       │   └── unassigned-jobs-sidebar/
+│       │       │       └── index.ts
+│       │       ├── hooks/
+│       │       │   └── use-drag-and-drop/
+│       │       │       └── index.ts
+│       │       └── utils/
+│       │           └── conflict-detector/
+│       │               └── index.ts
+│       ├── components/
+│       │   └── global-search/
+│       │       └── index.ts
+│       ├── package.json
+│       └── settings/
+│           ├── company-info/
+│           │   └── index.ts
+│           └── team-management/
+│               └── index.ts
+└── service-flex-website/
+    ├── package.json
+    └── src/
+        ├── blog/
+        │   └── index.ts
+        └── pricing/
+            └── index.ts

@@ -1,0 +1,58 @@
+{
+  "name": "flexdesk-website",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/flexdesk-website/src",
+  "projectType": "application",
+  "tags": ["scope:website", "type:app"],
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "next dev --port 3001",
+        "cwd": "packages/flexdesk-website"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "next build",
+        "cwd": "packages/flexdesk-website"
+      }
+    },
+    "start": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "next start",
+        "cwd": "packages/flexdesk-website"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "ESLINT_USE_FLAT_CONFIG=true next lint",
+        "cwd": "packages/flexdesk-website"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc --noEmit",
+        "cwd": "packages/flexdesk-website"
+      }
+    },
+    "github:sync": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsx src/github/github-sync.ts",
+        "cwd": "packages/flexdesk-website"
+      }
+    },
+    "db:migrate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsx src/database/migrate-database.ts",
+        "cwd": "packages/flexdesk-website"
+      }
+    }
+  }
+}

@@ -1,0 +1,223 @@
+/**
+ * Alternative Light/Minimal Sidebar Design
+ * 
+ * This is a lighter, more minimal alternative to the dark gradient design.
+ * Features: Clean white background, subtle shadows, minimal colors
+ */
+
+.sidebar-alt {
+  background: #ffffff !important;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.08);
+  border-right: 1px solid #e5e7eb;
+}
+
+/* Brand Section */
+.sidebar-brand-alt {
+  padding: 1.5rem 1rem !important;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 0.5rem;
+}
+
+.brand-container-alt {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.sidebar-brand-full-alt {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  letter-spacing: -0.5px;
+}
+
+/* Navigation Styles */
+.sidebar-nav-alt {
+  padding: 0.5rem 0 !important;
+}
+
+.nav-section-alt {
+  margin-bottom: 1.5rem;
+}
+
+.nav-section-alt:last-child {
+  margin-bottom: 0;
+}
+
+.nav-title-alt {
+  padding: 0.5rem 1rem 0.75rem !important;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280 !important;
+  margin-bottom: 0.5rem;
+}
+
+.nav-item {
+  margin: 0.25rem 0;
+}
+
+.nav-link-alt {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem !important;
+  margin: 0 0.5rem;
+  border-radius: 8px;
+  color: #4b5563 !important;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  position: relative;
+  font-weight: 500;
+  font-size: 0.9375rem;
+}
+
+.nav-link-alt:hover {
+  background: #f3f4f6 !important;
+  color: #1f2937 !important;
+}
+
+.nav-link-alt.active {
+  background: #eff6ff !important;
+  color: #2563eb !important;
+  font-weight: 600;
+}
+
+.nav-link-alt.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: #2563eb;
+  border-radius: 0 3px 3px 0;
+}
+
+.nav-icon-alt {
+  width: 20px;
+  height: 20px;
+  color: #6b7280;
+  transition: color 0.2s ease;
+}
+
+.nav-link-alt:hover .nav-icon-alt {
+  color: #1f2937;
+}
+
+.nav-link-alt.active .nav-icon-alt {
+  color: #2563eb;
+}
+
+.nav-label-alt {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.nav-indicator-alt {
+  position: absolute;
+  right: 1rem;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2563eb;
+}
+
+/* Footer Section */
+.sidebar-footer-alt {
+  padding: 1rem !important;
+  border-top: 1px solid #e5e7eb;
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: #f9fafb;
+}
+
+.user-profile-alt {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.user-avatar-alt {
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.user-info-alt {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.user-name-alt {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-email-alt {
+  font-size: 0.75rem;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.settings-link-alt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #6b7280;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  border: 1px solid #e5e7eb;
+}
+
+.settings-link-alt:hover {
+  background: #f3f4f6;
+  color: #1f2937;
+  border-color: #d1d5db;
+}
+
+/* Toggler */
+.sidebar-toggler-alt {
+  margin: 0.5rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.sidebar-toggler-alt:hover {
+  background: #f3f4f6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991.98px) {
+  .sidebar-brand-full-alt {
+    display: none;
+  }
+  
+  .user-info-alt {
+    display: none;
+  }
+  
+  .settings-link-alt {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+}

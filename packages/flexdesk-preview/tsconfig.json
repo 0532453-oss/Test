@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["vite/client"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["../flexdesk-admin/src/*"],
+      "@/components/admin": ["../flexdesk-admin/src/components/admin"],
+      "@/components/ui/*": ["../flexdesk-admin/src/components/ui/*"],
+      "@/lib/*": ["../flexdesk-admin/src/lib/*"],
+      "@/hooks/*": ["../flexdesk-admin/src/hooks/*"],
+      "@service-flex/core": ["../flexdesk-core/src"],
+      "@service-flex/types": ["../flexdesk-types/src"],
+      "flexdesk-ui/*": ["../flexdesk-ui/src/*"]
+    }
+  },
+  "include": ["src", "../flexdesk-front/simple-jobber/**/*", "../flexdesk-admin/src/**/*", "../flexdesk-ui/src/**/*"]
+}
+

@@ -1,0 +1,40 @@
+{
+  "name": "flexdesk-website",
+  "private": true,
+  "scripts": {
+    "dev": "npx next dev",
+    "build": "npx next build",
+    "start": "npx next start",
+    "lint": "ESLINT_USE_FLAT_CONFIG=true npx next lint"
+  },
+  "dependencies": {
+    "@codesandbox/sandpack-react": "^2.0.0",
+    "@emotion/cache": "^11.13.1",
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.3",
+    "@stripe/stripe-js": "^8.7.0",
+    "@tabler/icons-react": "^3.0.0",
+    "autoprefixer": "^10.4.23",
+    "date-fns": "^3.0.0",
+    "facepaint": "^1.2.1",
+    "framer-motion": "^11.0.0",
+    "lucide-react": "^0.541.0",
+    "next": "^14.2.25",
+    "next-mdx-remote": "^5.0.0",
+    "next-runtime-env": "^3.3.0",
+    "postcss": "^8.5.6",
+    "prop-types": "^15.8.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remark-gfm": "^4.0.0",
+    "tailwindcss": "^3.4.19"
+  },
+  "devDependencies": {
+    "@next/eslint-plugin-next": "^14.2.0",
+    "@types/facepaint": "^1.2.5",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.1",
+    "eslint-config-next": "^14.2.0"
+  }
+}

@@ -1,0 +1,169 @@
+/*
+ * Declare external layer BEFORE Tailwind so Tailwind utilities
+ * take precedence over CoreUI styles (CSS cascade layers: later layers win).
+ */
+@layer coreui;
+
+@import "tailwindcss";
+
+/*
+ * Atlantis Design System CSS Variables
+ * These tokens match the AtlantisThemeContext design system
+ */
+:root {
+  /* Colors - Light Theme */
+  --color-surface: #ffffff;
+  --color-surface--background: #f6f6f6;
+  --color-surface--hover: #f0f0f0;
+  --color-surface--reverse: #1a1a1a;
+  --color-text: #1a1a1a;
+  --color-text--secondary: #6b6b6b;
+  --color-text--reverse: #ffffff;
+  --color-interactive: #0070f3;
+  --color-interactive--hover: #0060d0;
+  --color-interactive--subtle: #e6f0ff;
+  --color-critical: #dc2626;
+  --color-critical--surface: #fef2f2;
+  --color-critical--hover: #b91c1c;
+  --color-warning: #f59e0b;
+  --color-warning--surface: #fffbeb;
+  --color-success: #16a34a;
+  --color-success--surface: #f0fdf4;
+  --color-informative: #0284c7;
+  --color-informative--surface: #f0f9ff;
+  --color-border: #e5e5e5;
+  --color-border--hover: #d4d4d4;
+  --color-border--interactive: #0070f3;
+
+  /* Semantic status text colors */
+  --color-success--text: #16a34a;
+  --color-warning--text: #ca8a04;
+  --color-critical--text: #dc2626;
+  --color-informative--text: #0284c7;
+  --color-inactive: #737373;
+  --color-inactive--surface: #f5f5f5;
+
+  /* Semantic status border colors */
+  --color-success--border: #bbf7d0;
+  --color-warning--border: #fef08a;
+  --color-critical--border: #fecaca;
+  --color-informative--border: #bae6fd;
+
+  /* Disabled state */
+  --color-disabled: #a3a3a3;
+  --color-disabled--secondary: #d4d4d4;
+
+  /* Spacing */
+  --space-smallest: 2px;
+  --space-smaller: 4px;
+  --space-small: 8px;
+  --space-base: 16px;
+  --space-large: 24px;
+  --space-larger: 32px;
+  --space-largest: 48px;
+
+  /* Typography */
+  --typography-fontFamily: 'Inter', system-ui, -apple-system, sans-serif;
+  --typography-fontSize-base: 14px;
+  --typography-fontSize-small: 12px;
+  --typography-fontSize-large: 16px;
+  --typography-lineHeight: 1.5;
+
+  /* Border widths */
+  --border-base: 1px;
+  --border-thick: 2px;
+
+  /* Border radius */
+  --radius-small: 4px;
+  --radius-base: 8px;
+  --radius-large: 16px;
+  --radius-larger: 24px;
+
+  /* Shadows */
+  --shadow-base: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+  --shadow-high: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+/* Dark theme overrides */
+[data-theme="dark"],
+.dark {
+  --color-surface: #1a1a1a;
+  --color-surface--background: #0f0f0f;
+  --color-surface--hover: #2a2a2a;
+  --color-surface--reverse: #ffffff;
+  --color-text: #f5f5f5;
+  --color-text--secondary: #a3a3a3;
+  --color-text--reverse: #1a1a1a;
+  --color-interactive: #3b82f6;
+  --color-interactive--hover: #60a5fa;
+  --color-interactive--subtle: #1e3a5f;
+  --color-critical: #ef4444;
+  --color-critical--surface: #450a0a;
+  --color-critical--hover: #f87171;
+  --color-warning: #fbbf24;
+  --color-warning--surface: #451a03;
+  --color-success: #22c55e;
+  --color-success--surface: #052e16;
+  --color-informative: #38bdf8;
+  --color-informative--surface: #082f49;
+  --color-border: #404040;
+  --color-border--hover: #525252;
+
+  /* Semantic status text colors (dark) */
+  --color-success--text: #4ade80;
+  --color-warning--text: #facc15;
+  --color-critical--text: #f87171;
+  --color-informative--text: #38bdf8;
+  --color-inactive: #a3a3a3;
+  --color-inactive--surface: #262626;
+
+  /* Semantic status border colors (dark) */
+  --color-success--border: #166534;
+  --color-warning--border: #854d0e;
+  --color-critical--border: #991b1b;
+  --color-informative--border: #075985;
+
+  /* Shadows for dark mode */
+  --shadow-base: 0 1px 3px 0 rgb(0 0 0 / 0.3);
+  --shadow-high: 0 4px 6px -1px rgb(0 0 0 / 0.4);
+}
+
+/* Base typography */
+body {
+  font-family: var(--typography-fontFamily);
+  font-size: var(--typography-fontSize-base);
+  line-height: var(--typography-lineHeight);
+  color: var(--color-text);
+  background-color: var(--color-surface--background);
+}
+
+/* Remove default list styling for role="tablist" */
+[role="tablist"] {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Full-height calendar for schedule page */
+.schedule-page-calendar {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.schedule-page-calendar .flexdesk-calendar {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.schedule-page-calendar .sx-react-calendar-wrapper {
+  flex: 1;
+  min-height: 0;
+  height: 100% !important;
+}
+
+.schedule-page-calendar .sx-react-calendar-wrapper > div {
+  height: 100% !important;
+}

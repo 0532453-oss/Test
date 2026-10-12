@@ -1,0 +1,6 @@
+{
+  "name": "create-flexdesk-app",
+  "version": "0.0.1",
+  "private": true,
+  "description": "CLI tool to create new FlexDesk applications"
+}

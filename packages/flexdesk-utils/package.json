@@ -1,0 +1,47 @@
+{
+  "name": "flexdesk-utils",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pure utility functions for FlexDesk - no React dependencies",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./date": {
+      "import": "./dist/date/index.mjs",
+      "require": "./dist/date/index.js",
+      "types": "./dist/date/index.d.ts"
+    },
+    "./format": {
+      "import": "./dist/format/index.mjs",
+      "require": "./dist/format/index.js",
+      "types": "./dist/format/index.d.ts"
+    },
+    "./validation": {
+      "import": "./dist/validation/index.mjs",
+      "require": "./dist/validation/index.js",
+      "types": "./dist/validation/index.d.ts"
+    },
+    "./string": {
+      "import": "./dist/string/index.mjs",
+      "require": "./dist/string/index.js",
+      "types": "./dist/string/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0"
+  }
+}

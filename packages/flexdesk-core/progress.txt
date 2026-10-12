@@ -1,0 +1,14 @@
+# FlexDesk Core - Progress
+
+## Completed
+- US-001: Add retry logic with exponential backoff to ApiClient
+
+## Learnings
+- ApiClient.request() method is the single entry point for all requests -- retry logic wraps the fetch loop there
+- Added maxRetries and idempotencyKey to ApiRequestOptions interface
+- RETRYABLE_STATUSES, MAX_BACKOFF_MS, BASE_DELAY_MS, JITTER_FACTOR are module-level constants
+- POST without idempotencyKey skips retry entirely (isRetryAllowed check)
+- Network errors (TypeError) are also retryable, not just HTTP status codes
+- Cache lookup moved outside the retry loop to avoid redundant lookups
+- Retry logs go to apiDebugStore with status=0 and error message describing the retry attempt
+- Typecheck passes cleanly with no errors

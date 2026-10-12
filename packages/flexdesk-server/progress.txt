@@ -1,0 +1,46 @@
+# Progress Log
+
+## Learnings
+- flexdesk-server has no `typecheck` script; use `npx tsc --noEmit` instead
+- Bash paths must use `/c/Users/...` format (MSYS), not `C:\Users\...`
+- `.dockerignore` exists at monorepo root, not in server package
+- `sourceMap: false` in tsconfig.json means no source maps in dist
+
+## Completed Tasks
+
+### US-011: Railway Deployment Config Hardening
+- Added `"numReplicas": 1` to railway.json deploy section
+- Verified all other criteria were already met:
+  - healthcheckPath: "/api/v1/health" already present
+  - EXPOSE 3001 already in Dockerfile
+  - CMD runs migrations before starting already configured
+  - No .env or source maps copied (sourceMap: false in tsconfig)
+  - Non-root user (nestjs) already configured
+  - .dockerignore at monorepo root excludes node_modules, .env, dist, coverage, .git
+- Typecheck passes (tsc --noEmit clean)
+
+### US-012: Stripe Webhook Signature Verification Hardening
+- Added startup warning in StripeService constructor when STRIPE_SECRET_KEY is set but STRIPE_WEBHOOK_SECRET is not
+- Added tolerance of 300 seconds (5 minutes) to constructEvent() call to reject replay attacks
+- Verified signature verification already uses constructEvent() with raw body
+- Verified BadRequestException (HTTP 400) already returned on signature failure
+- All 17 stripe.service tests pass
+- Typecheck passes
+
+### US-013: Email Template for Estimate Sent
+- Added `notifyEstimateSent(estimate, customer)` method to NotificationService
+- Uses existing 'estimate-sent' template in renderEmailTemplate()
+- SMS fallback includes estimate number and link
+- Respects customer notification preferences via `sendNotificationWithPreferences('estimateSent', ...)`
+- Estimate link: `${publicBaseUrl}/estimates/${estimate.id}`
+- All 32 notification.service tests pass
+- Typecheck passes
+
+### US-014: Startup Environment Validation
+- Created `src/core/config/env-validation.ts` with `validateRequiredEnv()` function
+- Checks DATABASE_URL, JWT_SECRET, JOB_TOKEN_SECRET, CUSTOMER_PORTAL_SECRET
+- Conditionally requires CORS_ORIGIN in production
+- Lists ALL missing vars in error message (not just first)
+- Called in main.ts before NestFactory.create()
+- Removed redundant CORS_ORIGIN check from main.ts (now handled by validateRequiredEnv)
+- All 422 tests pass, typecheck clean

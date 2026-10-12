@@ -1,0 +1,2189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlexDesk — UI Playground</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+  :root {
+    --bg: #050507;
+    --surface: #0c0c12;
+    --surface-2: #131320;
+    --surface-3: #1a1a2e;
+    --border: #1e1e35;
+    --border-hover: #2d2d50;
+    --text: #eeeef5;
+    --text-2: #b0b0cc;
+    --text-3: #6a6a8e;
+    --accent: #6c5ce7;
+    --accent-light: #a29bfe;
+    --accent-dark: #4a3db8;
+    --green: #00d2a0;
+    --green-dark: #00a87e;
+    --blue: #4dabf7;
+    --blue-dark: #1c7ed6;
+    --orange: #ff8b3e;
+    --orange-dark: #e06b1e;
+    --pink: #f06595;
+    --pink-dark: #d63a6e;
+    --red: #ff5555;
+    --yellow: #ffd43b;
+    --cyan: #22d3ee;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --shadow: 0 4px 24px rgba(0,0,0,.4);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,.5);
+    --shadow-glow: 0 0 30px rgba(108,92,231,.2);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+  /* ── Background ── */
+  .bg-noise {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: .35;
+    background-image: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(108,92,231,.12) 0%, transparent 60%),
+                      radial-gradient(ellipse 60% 40% at 80% 100%, rgba(0,210,160,.06) 0%, transparent 50%);
+  }
+
+  /* ── Nav ── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 40px;
+    background: rgba(5,5,7,.7); backdrop-filter: blur(24px) saturate(1.4);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo { display: flex; align-items: center; gap: 10px; }
+  .nav-logo-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--green));
+    display: grid; place-items: center; font-weight: 900; font-size: 14px; color: #fff;
+  }
+  .nav-logo h1 { font-size: 17px; font-weight: 700; letter-spacing: -.3px; }
+  .nav-logo h1 span { color: var(--accent-light); }
+  .nav-tabs { display: flex; gap: 4px; }
+  .nav-tab {
+    padding: 6px 16px; border-radius: var(--radius-sm); border: none;
+    background: transparent; color: var(--text-3); cursor: pointer;
+    font-family: inherit; font-size: 13px; font-weight: 500; transition: all .2s;
+  }
+  .nav-tab:hover { color: var(--text-2); background: var(--surface-2); }
+  .nav-tab.active { color: var(--text); background: var(--surface-3); }
+
+  /* ── Layout ── */
+  .page { position: relative; z-index: 1; padding: 40px; max-width: 1400px; margin: 0 auto; }
+  .section { margin-bottom: 64px; }
+  .section-header {
+    display: flex; align-items: baseline; gap: 12px;
+    margin-bottom: 28px; padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-header h2 { font-size: 22px; font-weight: 700; letter-spacing: -.3px; }
+  .section-header .count {
+    font-size: 12px; font-weight: 600; color: var(--accent-light);
+    background: rgba(108,92,231,.12); padding: 2px 10px; border-radius: 20px;
+  }
+  .section-header p { font-size: 13px; color: var(--text-3); margin-left: auto; }
+
+  .grid { display: grid; gap: 20px; }
+  .grid-2 { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+  .grid-3 { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+  .grid-4 { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  .flex-wrap { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .flex-col { display: flex; flex-direction: column; gap: 12px; }
+
+  /* ═══════════════════════════════════════════════════════
+     BUTTONS
+     ═══════════════════════════════════════════════════════ */
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 10px 22px; border-radius: var(--radius-sm); border: none;
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all .2s ease; position: relative; overflow: hidden;
+    text-decoration: none; white-space: nowrap;
+  }
+  .btn:active { transform: scale(.97); }
+
+  /* Primary */
+  .btn-primary {
+    background: var(--accent); color: #fff;
+    box-shadow: 0 2px 12px rgba(108,92,231,.3);
+  }
+  .btn-primary:hover { background: var(--accent-light); box-shadow: 0 4px 20px rgba(108,92,231,.4); transform: translateY(-1px); }
+
+  /* Secondary */
+  .btn-secondary {
+    background: var(--surface-3); color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: var(--border); border-color: var(--border-hover); }
+
+  /* Ghost */
+  .btn-ghost { background: transparent; color: var(--text-2); }
+  .btn-ghost:hover { background: var(--surface-2); color: var(--text); }
+
+  /* Outline */
+  .btn-outline {
+    background: transparent; color: var(--accent-light);
+    border: 1.5px solid var(--accent);
+  }
+  .btn-outline:hover { background: rgba(108,92,231,.1); border-color: var(--accent-light); }
+
+  /* Gradient */
+  .btn-gradient {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--pink) 100%);
+    color: #fff; box-shadow: 0 2px 16px rgba(108,92,231,.25);
+  }
+  .btn-gradient:hover { box-shadow: 0 4px 24px rgba(108,92,231,.4); transform: translateY(-2px); filter: brightness(1.1); }
+
+  .btn-gradient-green {
+    background: linear-gradient(135deg, var(--green-dark) 0%, var(--cyan) 100%);
+    color: #fff; box-shadow: 0 2px 16px rgba(0,210,160,.2);
+  }
+  .btn-gradient-green:hover { box-shadow: 0 4px 24px rgba(0,210,160,.35); transform: translateY(-2px); }
+
+  .btn-gradient-warm {
+    background: linear-gradient(135deg, var(--orange) 0%, var(--pink) 100%);
+    color: #fff; box-shadow: 0 2px 16px rgba(255,139,62,.2);
+  }
+  .btn-gradient-warm:hover { box-shadow: 0 4px 24px rgba(255,139,62,.35); transform: translateY(-2px); }
+
+  /* Danger */
+  .btn-danger {
+    background: rgba(255,85,85,.12); color: var(--red);
+    border: 1px solid rgba(255,85,85,.2);
+  }
+  .btn-danger:hover { background: rgba(255,85,85,.2); border-color: rgba(255,85,85,.4); }
+
+  /* Success */
+  .btn-success {
+    background: rgba(0,210,160,.12); color: var(--green);
+    border: 1px solid rgba(0,210,160,.2);
+  }
+  .btn-success:hover { background: rgba(0,210,160,.2); border-color: rgba(0,210,160,.4); }
+
+  /* Sizes */
+  .btn-xs { padding: 4px 10px; font-size: 11px; border-radius: 6px; }
+  .btn-sm { padding: 7px 14px; font-size: 12px; }
+  .btn-lg { padding: 14px 28px; font-size: 16px; border-radius: var(--radius); }
+  .btn-xl { padding: 18px 36px; font-size: 18px; border-radius: var(--radius-lg); }
+
+  /* Icon button */
+  .btn-icon {
+    width: 40px; height: 40px; padding: 0; border-radius: var(--radius-sm);
+    background: var(--surface-3); color: var(--text-2); border: 1px solid var(--border);
+  }
+  .btn-icon:hover { background: var(--border); color: var(--text); }
+  .btn-icon.round { border-radius: 50%; }
+  .btn-icon svg { width: 18px; height: 18px; }
+
+  /* Pill */
+  .btn-pill { border-radius: 50px; }
+
+  /* Glass */
+  .btn-glass {
+    background: rgba(255,255,255,.05); color: var(--text);
+    border: 1px solid rgba(255,255,255,.08);
+    backdrop-filter: blur(12px);
+  }
+  .btn-glass:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.15); }
+
+  /* Neon glow */
+  .btn-neon {
+    background: transparent; color: var(--cyan);
+    border: 1.5px solid var(--cyan);
+    text-shadow: 0 0 8px rgba(34,211,238,.5);
+    box-shadow: 0 0 12px rgba(34,211,238,.15), inset 0 0 12px rgba(34,211,238,.05);
+  }
+  .btn-neon:hover {
+    background: rgba(34,211,238,.08);
+    box-shadow: 0 0 24px rgba(34,211,238,.3), inset 0 0 20px rgba(34,211,238,.08);
+    text-shadow: 0 0 16px rgba(34,211,238,.7);
+  }
+
+  .btn-neon-pink {
+    background: transparent; color: var(--pink);
+    border: 1.5px solid var(--pink);
+    text-shadow: 0 0 8px rgba(240,101,149,.5);
+    box-shadow: 0 0 12px rgba(240,101,149,.15), inset 0 0 12px rgba(240,101,149,.05);
+  }
+  .btn-neon-pink:hover {
+    background: rgba(240,101,149,.08);
+    box-shadow: 0 0 24px rgba(240,101,149,.3), inset 0 0 20px rgba(240,101,149,.08);
+  }
+
+  /* Loading */
+  .btn-loading { pointer-events: none; opacity: .7; }
+  .btn-loading .spinner {
+    width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3);
+    border-top-color: #fff; border-radius: 50%;
+    animation: spin .6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Ripple effect */
+  .btn-ripple { position: relative; overflow: hidden; }
+  .ripple-wave {
+    position: absolute; border-radius: 50%;
+    background: rgba(255,255,255,.25);
+    transform: scale(0); animation: ripple .6s ease-out;
+    pointer-events: none;
+  }
+  @keyframes ripple { to { transform: scale(4); opacity: 0; } }
+
+  /* Shimmer / shine */
+  .btn-shine::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.12) 45%, rgba(255,255,255,.2) 50%, rgba(255,255,255,.12) 55%, transparent 60%);
+    background-size: 300% 100%;
+    animation: shine 3s infinite;
+  }
+  @keyframes shine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  /* Animated border */
+  .btn-border-anim {
+    background: var(--surface-2); color: var(--text); padding: 11px 23px;
+    border: none; position: relative; z-index: 1;
+  }
+  .btn-border-anim::before {
+    content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px;
+    background: conic-gradient(from var(--angle, 0deg), var(--accent), var(--cyan), var(--pink), var(--accent));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    animation: borderRotate 3s linear infinite;
+  }
+  @property --angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+  @keyframes borderRotate { to { --angle: 360deg; } }
+
+  /* Magnetic button */
+  .btn-magnetic { transition: transform .15s ease-out; }
+
+  /* Button group */
+  .btn-group { display: inline-flex; }
+  .btn-group .btn { border-radius: 0; border-right: 1px solid rgba(255,255,255,.08); }
+  .btn-group .btn:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+  .btn-group .btn:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; border-right: none; }
+
+
+  /* ═══════════════════════════════════════════════════════
+     CARDS
+     ═══════════════════════════════════════════════════════ */
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all .3s ease;
+  }
+  .card:hover {
+    border-color: var(--border-hover);
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
+  }
+
+  .card-body { padding: 24px; }
+  .card-body h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .card-body p { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+  /* ── Stat card ── */
+  .card-stat { padding: 24px; position: relative; overflow: hidden; }
+  .card-stat .stat-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: grid; place-items: center; margin-bottom: 16px; font-size: 20px;
+  }
+  .card-stat .stat-value { font-size: 32px; font-weight: 800; letter-spacing: -1px; margin-bottom: 2px; }
+  .card-stat .stat-label { font-size: 13px; color: var(--text-3); }
+  .card-stat .stat-change {
+    position: absolute; top: 24px; right: 24px;
+    font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 20px;
+  }
+  .card-stat .stat-change.up { background: rgba(0,210,160,.1); color: var(--green); }
+  .card-stat .stat-change.down { background: rgba(255,85,85,.1); color: var(--red); }
+  .stat-bar {
+    margin-top: 16px; height: 4px; border-radius: 2px;
+    background: var(--surface-3); overflow: hidden;
+  }
+  .stat-bar-fill { height: 100%; border-radius: 2px; transition: width 1s ease; }
+
+  /* ── Feature card ── */
+  .card-feature { padding: 28px; position: relative; }
+  .card-feature::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--cyan));
+    opacity: 0; transition: opacity .3s;
+  }
+  .card-feature:hover::before { opacity: 1; }
+  .card-feature .feature-icon {
+    width: 48px; height: 48px; border-radius: 14px;
+    display: grid; place-items: center; margin-bottom: 18px;
+    font-size: 22px;
+  }
+  .card-feature h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .card-feature p { font-size: 13px; color: var(--text-2); line-height: 1.7; }
+  .card-feature .feature-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 16px; font-size: 13px; font-weight: 600; color: var(--accent-light);
+    cursor: pointer; transition: gap .2s;
+  }
+  .card-feature:hover .feature-link { gap: 10px; }
+
+  /* ── Profile card ── */
+  .card-profile { text-align: center; padding: 32px 24px; }
+  .card-profile .avatar {
+    width: 72px; height: 72px; border-radius: 50%;
+    margin: 0 auto 16px;
+    background: linear-gradient(135deg, var(--accent), var(--pink));
+    display: grid; place-items: center; font-size: 28px; font-weight: 700; color: #fff;
+    border: 3px solid var(--surface);
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+  .card-profile h3 { font-size: 16px; font-weight: 700; }
+  .card-profile .role { font-size: 12px; color: var(--accent-light); margin-bottom: 16px; }
+  .card-profile .profile-stats {
+    display: flex; justify-content: center; gap: 24px;
+    padding-top: 16px; border-top: 1px solid var(--border);
+  }
+  .card-profile .profile-stats div { text-align: center; }
+  .card-profile .profile-stats .val { font-size: 18px; font-weight: 700; }
+  .card-profile .profile-stats .lbl { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 1px; }
+
+  /* ── Pricing card ── */
+  .card-pricing { padding: 32px; text-align: center; }
+  .card-pricing.featured {
+    border-color: var(--accent);
+    background: linear-gradient(180deg, rgba(108,92,231,.06) 0%, var(--surface) 40%);
+    box-shadow: 0 0 40px rgba(108,92,231,.1);
+  }
+  .card-pricing .plan-badge {
+    display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--accent-light);
+    margin-bottom: 12px;
+  }
+  .card-pricing .plan-badge.pop {
+    background: var(--accent); color: #fff; padding: 3px 12px; border-radius: 20px;
+  }
+  .card-pricing .price { font-size: 48px; font-weight: 800; letter-spacing: -2px; margin-bottom: 4px; }
+  .card-pricing .price span { font-size: 18px; font-weight: 500; color: var(--text-3); }
+  .card-pricing .price-sub { font-size: 13px; color: var(--text-3); margin-bottom: 24px; }
+  .card-pricing .plan-features {
+    list-style: none; text-align: left; margin-bottom: 28px;
+  }
+  .card-pricing .plan-features li {
+    font-size: 13px; color: var(--text-2); padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,.03);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .card-pricing .plan-features .check { color: var(--green); font-weight: 700; }
+
+  /* ── Notification card ── */
+  .card-notif {
+    padding: 16px 20px; display: flex; align-items: flex-start; gap: 14px;
+    cursor: pointer;
+  }
+  .card-notif .notif-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    margin-top: 4px; flex-shrink: 0;
+  }
+  .card-notif h4 { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+  .card-notif p { font-size: 12px; color: var(--text-3); }
+  .card-notif .notif-time { font-size: 11px; color: var(--text-3); margin-left: auto; white-space: nowrap; }
+
+  /* ── Image / hero card ── */
+  .card-hero { position: relative; min-height: 260px; display: flex; flex-direction: column; justify-content: flex-end; }
+  .card-hero .hero-bg {
+    position: absolute; inset: 0; border-radius: inherit;
+  }
+  .card-hero .hero-content { position: relative; z-index: 1; padding: 28px; }
+  .card-hero .hero-content h3 { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+  .card-hero .hero-content p { font-size: 13px; color: rgba(255,255,255,.75); }
+
+  /* ── Metric / dashboard card ── */
+  .card-metric { padding: 20px; }
+  .card-metric .metric-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .card-metric .metric-header h4 { font-size: 12px; color: var(--text-3); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+  .card-metric .metric-value { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
+  .card-metric .metric-chart {
+    display: flex; align-items: flex-end; gap: 3px; height: 48px; margin-top: 12px;
+  }
+  .card-metric .bar {
+    flex: 1; border-radius: 2px; transition: height .4s ease;
+    min-width: 0;
+  }
+
+  /* ── Glass card ── */
+  .card-glass {
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.06);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius-xl);
+  }
+  .card-glass:hover {
+    background: rgba(255,255,255,.05);
+    border-color: rgba(255,255,255,.1);
+    box-shadow: 0 8px 32px rgba(0,0,0,.3);
+  }
+
+  /* ── Command / code card ── */
+  .card-command {
+    padding: 16px 20px; font-family: 'SF Mono', 'Fira Code', monospace;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .card-command .prompt { color: var(--green); font-weight: 600; font-size: 14px; }
+  .card-command .cmd { color: var(--text); font-size: 13px; flex: 1; }
+  .card-command .copy-btn {
+    padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--surface-3); color: var(--text-3); cursor: pointer;
+    font-family: inherit; font-size: 11px; transition: all .2s;
+  }
+  .card-command .copy-btn:hover { border-color: var(--accent); color: var(--text); }
+
+  /* ── Toggle card ── */
+  .card-toggle { padding: 20px; display: flex; align-items: center; gap: 16px; cursor: pointer; }
+  .card-toggle .toggle-info { flex: 1; }
+  .card-toggle h4 { font-size: 14px; font-weight: 600; }
+  .card-toggle p { font-size: 12px; color: var(--text-3); }
+  .toggle-switch {
+    width: 44px; height: 24px; border-radius: 12px; padding: 2px;
+    background: var(--surface-3); cursor: pointer; transition: background .2s; flex-shrink: 0;
+  }
+  .toggle-switch.on { background: var(--accent); }
+  .toggle-switch .toggle-knob {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #fff; transition: transform .2s; box-shadow: 0 1px 4px rgba(0,0,0,.3);
+  }
+  .toggle-switch.on .toggle-knob { transform: translateX(20px); }
+
+  /* ── Skeleton / loading card ── */
+  .card-skeleton { padding: 24px; }
+  .skel {
+    border-radius: 6px; background: var(--surface-3);
+    animation: skelPulse 1.5s ease-in-out infinite;
+  }
+  .skel-circle { width: 48px; height: 48px; border-radius: 50%; margin-bottom: 16px; }
+  .skel-line { height: 12px; margin-bottom: 10px; }
+  .skel-line.w60 { width: 60%; }
+  .skel-line.w80 { width: 80%; }
+  .skel-line.w40 { width: 40%; }
+  @keyframes skelPulse {
+    0%, 100% { opacity: .4; }
+    50% { opacity: .8; }
+  }
+
+  /* ── Interactive playground label ── */
+  .play-label {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--text-3); margin-bottom: 16px;
+  }
+  .play-label .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: blink 2s infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+
+  /* ── Split button ── */
+  .btn-split { display: inline-flex; border-radius: var(--radius-sm); overflow: hidden; }
+  .btn-split .btn-split-main {
+    padding: 10px 18px; background: var(--accent); color: #fff; border: none;
+    font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s;
+  }
+  .btn-split .btn-split-main:hover { background: var(--accent-light); }
+  .btn-split .btn-split-arrow {
+    padding: 10px 10px; background: var(--accent-dark); color: #fff; border: none;
+    border-left: 1px solid rgba(255,255,255,.15); cursor: pointer; transition: all .2s; font-size: 12px;
+  }
+  .btn-split .btn-split-arrow:hover { background: var(--accent); }
+
+  /* ── 3D / raised ── */
+  .btn-3d {
+    background: var(--accent); color: #fff;
+    box-shadow: 0 4px 0 var(--accent-dark), 0 6px 12px rgba(0,0,0,.3);
+    transform: translateY(0);
+  }
+  .btn-3d:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--accent-dark), 0 8px 16px rgba(0,0,0,.35); }
+  .btn-3d:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--accent-dark), 0 3px 6px rgba(0,0,0,.25); }
+
+  .btn-3d-green {
+    background: var(--green); color: #fff;
+    box-shadow: 0 4px 0 var(--green-dark), 0 6px 12px rgba(0,0,0,.3);
+  }
+  .btn-3d-green:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--green-dark), 0 8px 16px rgba(0,0,0,.35); }
+  .btn-3d-green:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--green-dark), 0 3px 6px rgba(0,0,0,.25); }
+
+  .btn-3d-red {
+    background: var(--red); color: #fff;
+    box-shadow: 0 4px 0 #cc3333, 0 6px 12px rgba(0,0,0,.3);
+  }
+  .btn-3d-red:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #cc3333, 0 8px 16px rgba(0,0,0,.35); }
+  .btn-3d-red:active { transform: translateY(2px); box-shadow: 0 2px 0 #cc3333, 0 3px 6px rgba(0,0,0,.25); }
+
+  /* ── Confirm (two-click) ── */
+  .btn-confirm { transition: all .3s; }
+  .btn-confirm.confirming { background: var(--red) !important; color: #fff !important; border-color: var(--red) !important; animation: headShake .5s; }
+  @keyframes headShake {
+    0%,100% { transform: translateX(0); }
+    15%,45%,75% { transform: translateX(-4px); }
+    30%,60% { transform: translateX(4px); }
+  }
+
+  /* ── Counter button ── */
+  .btn-counter { gap: 0; padding: 0; overflow: hidden; }
+  .btn-counter .counter-label { padding: 10px 16px; }
+  .btn-counter .counter-val {
+    padding: 10px 14px; background: rgba(255,255,255,.1);
+    font-weight: 800; min-width: 44px; text-align: center;
+    border-left: 1px solid rgba(255,255,255,.1);
+  }
+
+  /* ── Social buttons ── */
+  .btn-social { gap: 10px; font-weight: 600; }
+  .btn-google { background: #fff; color: #333; border: 1px solid #ddd; }
+  .btn-google:hover { background: #f5f5f5; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+  .btn-github { background: #24292e; color: #fff; }
+  .btn-github:hover { background: #2f363d; }
+  .btn-slack { background: #4a154b; color: #fff; }
+  .btn-slack:hover { background: #5b1d5c; }
+  .btn-twitter { background: #000; color: #fff; }
+  .btn-twitter:hover { background: #1a1a1a; }
+
+  /* ── Chips / tags ── */
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 50px; font-size: 12px; font-weight: 500;
+    cursor: pointer; transition: all .2s;
+  }
+  .chip-default { background: var(--surface-3); color: var(--text-2); border: 1px solid var(--border); }
+  .chip-default:hover { border-color: var(--border-hover); }
+  .chip-accent { background: rgba(108,92,231,.15); color: var(--accent-light); }
+  .chip-green { background: rgba(0,210,160,.12); color: var(--green); }
+  .chip-red { background: rgba(255,85,85,.1); color: var(--red); }
+  .chip-blue { background: rgba(77,171,247,.12); color: var(--blue); }
+  .chip-orange { background: rgba(255,139,62,.12); color: var(--orange); }
+  .chip .chip-close { font-size: 14px; opacity: .6; cursor: pointer; margin-left: 2px; }
+  .chip .chip-close:hover { opacity: 1; }
+
+  /* ── FAB ── */
+  .fab {
+    width: 56px; height: 56px; border-radius: 16px; border: none;
+    display: grid; place-items: center; cursor: pointer;
+    font-size: 24px; transition: all .25s; position: relative;
+    box-shadow: 0 4px 20px rgba(0,0,0,.3);
+  }
+  .fab-primary { background: var(--accent); color: #fff; }
+  .fab-primary:hover { background: var(--accent-light); transform: scale(1.08) rotate(90deg); box-shadow: 0 6px 28px rgba(108,92,231,.4); }
+  .fab-green { background: var(--green); color: #fff; }
+  .fab-green:hover { background: var(--green-dark); transform: scale(1.08); box-shadow: 0 6px 28px rgba(0,210,160,.4); }
+  .fab-mini { width: 40px; height: 40px; border-radius: 12px; font-size: 18px; }
+
+  /* ── Breadcrumb buttons ── */
+  .breadcrumb { display: flex; align-items: center; gap: 0; }
+  .breadcrumb .bread-item {
+    padding: 7px 16px; font-size: 12px; font-weight: 500; color: var(--text-3);
+    background: var(--surface-2); border: 1px solid var(--border); cursor: pointer;
+    font-family: inherit; transition: all .2s; position: relative;
+  }
+  .breadcrumb .bread-item:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+  .breadcrumb .bread-item:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; color: var(--text); }
+  .breadcrumb .bread-item:hover { color: var(--text); background: var(--surface-3); }
+  .breadcrumb .bread-sep { color: var(--text-3); font-size: 11px; padding: 0 2px; background: var(--surface-2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); line-height: 32px; }
+
+  /* ── Submit animated button ── */
+  .btn-submit-anim { min-width: 160px; transition: all .4s; }
+  .btn-submit-anim.success { background: var(--green) !important; box-shadow: 0 2px 16px rgba(0,210,160,.3) !important; }
+  .btn-submit-anim.error { background: var(--red) !important; box-shadow: 0 2px 16px rgba(255,85,85,.3) !important; }
+
+  /* ── Notification bell ── */
+  .btn-bell { position: relative; }
+  .btn-bell .bell-badge {
+    position: absolute; top: -4px; right: -4px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--red); color: #fff; font-size: 10px; font-weight: 700;
+    display: grid; place-items: center;
+    border: 2px solid var(--surface);
+    animation: bellPop .3s ease;
+  }
+  @keyframes bellPop { 0% { transform: scale(0); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
+
+  /* ── Stepper buttons ── */
+  .stepper { display: flex; gap: 0; }
+  .stepper .step-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 18px; font-family: inherit; font-size: 12px; font-weight: 600;
+    border: 1px solid var(--border); cursor: pointer; transition: all .2s;
+    background: var(--surface-2); color: var(--text-3);
+  }
+  .stepper .step-btn:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+  .stepper .step-btn:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .stepper .step-btn .step-num {
+    width: 22px; height: 22px; border-radius: 50%; font-size: 11px;
+    display: grid; place-items: center; background: var(--surface-3);
+  }
+  .stepper .step-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .stepper .step-btn.active .step-num { background: rgba(255,255,255,.2); }
+  .stepper .step-btn.done { background: rgba(0,210,160,.1); color: var(--green); border-color: rgba(0,210,160,.2); }
+  .stepper .step-btn.done .step-num { background: rgba(0,210,160,.2); }
+
+  /* ═══════════════════════════════════════════════════════
+     NEW CARDS
+     ═══════════════════════════════════════════════════════ */
+
+  /* ── Timeline card ── */
+  .card-timeline { padding: 24px; }
+  .tl-item { display: flex; gap: 14px; position: relative; padding-bottom: 20px; }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-item::before {
+    content: ''; position: absolute; left: 15px; top: 28px; bottom: 0;
+    width: 1px; background: var(--border);
+  }
+  .tl-item:last-child::before { display: none; }
+  .tl-dot {
+    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+    display: grid; place-items: center; font-size: 13px;
+    border: 2px solid var(--border); background: var(--surface);
+    position: relative; z-index: 1;
+  }
+  .tl-content h4 { font-size: 13px; font-weight: 600; }
+  .tl-content p { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+  .tl-content .tl-time { font-size: 10px; color: var(--text-3); margin-top: 4px; }
+
+  /* ── Chat / message card ── */
+  .card-chat { padding: 20px; }
+  .chat-msg { display: flex; gap: 10px; margin-bottom: 14px; }
+  .chat-msg:last-child { margin-bottom: 0; }
+  .chat-avatar {
+    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+    display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #fff;
+  }
+  .chat-bubble {
+    padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.5;
+    max-width: 85%;
+  }
+  .chat-bubble-in { background: var(--surface-3); color: var(--text); border-bottom-left-radius: 4px; }
+  .chat-bubble-out { background: var(--accent); color: #fff; border-bottom-right-radius: 4px; margin-left: auto; }
+  .chat-msg.outgoing { flex-direction: row-reverse; }
+  .chat-time { font-size: 10px; color: var(--text-3); margin-top: 4px; }
+  .chat-input-row { display: flex; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .chat-input {
+    flex: 1; padding: 8px 14px; border-radius: 20px; border: 1px solid var(--border);
+    background: var(--surface-2); color: var(--text); font-family: inherit; font-size: 13px; outline: none;
+  }
+  .chat-input:focus { border-color: var(--accent); }
+  .chat-send {
+    width: 36px; height: 36px; border-radius: 50%; border: none;
+    background: var(--accent); color: #fff; cursor: pointer; display: grid; place-items: center;
+    transition: all .2s;
+  }
+  .chat-send:hover { background: var(--accent-light); }
+
+  /* ── Progress / task card ── */
+  .card-task { padding: 20px; }
+  .task-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .task-header h4 { font-size: 14px; font-weight: 700; }
+  .task-status {
+    font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px;
+  }
+  .status-progress { background: rgba(77,171,247,.12); color: var(--blue); }
+  .status-review { background: rgba(255,212,59,.12); color: var(--yellow); }
+  .status-done { background: rgba(0,210,160,.12); color: var(--green); }
+  .task-meta { font-size: 12px; color: var(--text-3); margin-bottom: 12px; }
+  .task-progress-bar { height: 6px; border-radius: 3px; background: var(--surface-3); overflow: hidden; margin-bottom: 12px; }
+  .task-progress-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+  .task-assignees { display: flex; }
+  .task-assignee {
+    width: 28px; height: 28px; border-radius: 50%; margin-left: -8px;
+    display: grid; place-items: center; font-size: 10px; font-weight: 700; color: #fff;
+    border: 2px solid var(--surface);
+  }
+  .task-assignee:first-child { margin-left: 0; }
+
+  /* ── Testimonial card ── */
+  .card-testimonial { padding: 28px; position: relative; }
+  .testimonial-quote {
+    font-size: 14px; line-height: 1.8; color: var(--text-2); font-style: italic;
+    margin-bottom: 20px; position: relative; padding-left: 20px;
+  }
+  .testimonial-quote::before {
+    content: '"'; position: absolute; left: -4px; top: -8px;
+    font-size: 48px; color: var(--accent); opacity: .3; font-style: normal; font-weight: 900;
+  }
+  .testimonial-author { display: flex; align-items: center; gap: 12px; }
+  .testimonial-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: grid; place-items: center; font-size: 14px; font-weight: 700; color: #fff;
+  }
+  .testimonial-info h5 { font-size: 13px; font-weight: 600; }
+  .testimonial-info p { font-size: 11px; color: var(--text-3); }
+  .testimonial-stars { margin-left: auto; color: var(--yellow); font-size: 14px; letter-spacing: 2px; }
+
+  /* ── Kanban card ── */
+  .card-kanban { padding: 16px; cursor: grab; }
+  .card-kanban:active { cursor: grabbing; }
+  .kanban-labels { display: flex; gap: 6px; margin-bottom: 10px; }
+  .kanban-label { font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: .5px; }
+  .kanban-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+  .kanban-desc { font-size: 12px; color: var(--text-3); margin-bottom: 12px; line-height: 1.5; }
+  .kanban-footer { display: flex; align-items: center; justify-content: space-between; }
+  .kanban-footer .kanban-id { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+  /* ── Calendar event card ── */
+  .card-event { padding: 16px; display: flex; gap: 14px; }
+  .event-time {
+    text-align: center; flex-shrink: 0; padding: 8px 0;
+    border-right: 2px solid var(--accent); padding-right: 14px;
+  }
+  .event-time .et-hour { font-size: 18px; font-weight: 800; }
+  .event-time .et-ampm { font-size: 10px; color: var(--text-3); font-weight: 600; text-transform: uppercase; }
+  .event-body h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .event-body p { font-size: 12px; color: var(--text-3); }
+  .event-body .event-tag {
+    display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 8px;
+    border-radius: 4px; margin-top: 8px;
+  }
+
+  /* ── Empty state card ── */
+  .card-empty { padding: 48px 32px; text-align: center; }
+  .card-empty .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: .4; }
+  .card-empty h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--text-2); }
+  .card-empty p { font-size: 13px; color: var(--text-3); margin-bottom: 20px; max-width: 280px; margin-left: auto; margin-right: auto; }
+
+  /* ── Status / error card ── */
+  .card-status { padding: 20px; display: flex; align-items: flex-start; gap: 14px; }
+  .status-icon-box {
+    width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+    display: grid; place-items: center; font-size: 18px;
+  }
+  .card-status h4 { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+  .card-status p { font-size: 12px; color: var(--text-3); line-height: 1.5; }
+
+  /* ── Accordion / expandable card ── */
+  .card-accordion { cursor: pointer; }
+  .accordion-header {
+    padding: 18px 20px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .accordion-header h4 { font-size: 14px; font-weight: 600; }
+  .accordion-arrow {
+    font-size: 12px; color: var(--text-3); transition: transform .3s;
+  }
+  .card-accordion.open .accordion-arrow { transform: rotate(180deg); }
+  .accordion-body {
+    max-height: 0; overflow: hidden; transition: max-height .3s ease;
+    padding: 0 20px;
+  }
+  .card-accordion.open .accordion-body { max-height: 200px; }
+  .accordion-body p {
+    font-size: 13px; color: var(--text-2); line-height: 1.7;
+    padding-bottom: 18px;
+  }
+
+  /* ── Comparison / vs card ── */
+  .card-comparison { padding: 24px; }
+  .comp-row {
+    display: flex; align-items: center; padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,.03); font-size: 13px;
+  }
+  .comp-row:last-child { border-bottom: none; }
+  .comp-label { flex: 1; color: var(--text-2); }
+  .comp-a, .comp-b { width: 80px; text-align: center; font-weight: 600; }
+  .comp-header { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+
+  /* ── Checklist card ── */
+  .card-checklist { padding: 20px; }
+  .check-item {
+    display: flex; align-items: center; gap: 10px; padding: 8px 0;
+    cursor: pointer; transition: opacity .2s;
+  }
+  .check-item.checked { opacity: .5; }
+  .check-item.checked .check-text { text-decoration: line-through; }
+  .check-box {
+    width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--border);
+    display: grid; place-items: center; flex-shrink: 0; transition: all .2s;
+    font-size: 12px; color: transparent;
+  }
+  .check-item.checked .check-box {
+    background: var(--green); border-color: var(--green); color: #fff;
+  }
+  .check-text { font-size: 13px; }
+
+  /* ── Badge / achievement card ── */
+  .card-badge-achieve { padding: 24px; text-align: center; }
+  .badge-ring {
+    width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 16px;
+    display: grid; place-items: center; font-size: 32px;
+    position: relative;
+  }
+  .badge-ring::before {
+    content: ''; position: absolute; inset: -3px; border-radius: 50%;
+    border: 3px solid transparent; border-top-color: var(--accent); border-right-color: var(--green);
+    animation: badgeSpin 3s linear infinite;
+  }
+  @keyframes badgeSpin { to { transform: rotate(360deg); } }
+  .card-badge-achieve h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .card-badge-achieve p { font-size: 12px; color: var(--text-3); }
+
+  /* ── Activity feed card ── */
+  .card-activity { padding: 20px; }
+  .activity-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; }
+  .activity-avi {
+    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+    display: grid; place-items: center; font-size: 10px; font-weight: 700; color: #fff;
+  }
+  .activity-text { font-size: 12px; color: var(--text-2); line-height: 1.5; }
+  .activity-text strong { color: var(--text); font-weight: 600; }
+  .activity-text .act-time { color: var(--text-3); font-size: 11px; }
+
+  /* ── Donut chart card ── */
+  .card-donut { padding: 24px; display: flex; align-items: center; gap: 24px; }
+  .donut-wrap { position: relative; width: 100px; height: 100px; flex-shrink: 0; }
+  .donut-wrap svg { width: 100px; height: 100px; transform: rotate(-90deg); }
+  .donut-wrap circle { fill: none; stroke-width: 8; stroke-linecap: round; }
+  .donut-center {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    font-size: 20px; font-weight: 800;
+  }
+  .donut-legend { flex: 1; }
+  .donut-legend-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 12px; }
+  .donut-legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+  /* ── Map / location card ── */
+  .card-location { overflow: hidden; }
+  .location-map {
+    height: 120px; position: relative;
+  }
+  .location-map .map-pin {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -100%);
+    font-size: 24px; filter: drop-shadow(0 2px 4px rgba(0,0,0,.4));
+  }
+  .location-body { padding: 16px; }
+  .location-body h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .location-body p { font-size: 12px; color: var(--text-3); }
+  .location-body .loc-dist { font-size: 11px; color: var(--accent-light); font-weight: 600; margin-top: 6px; }
+
+  /* ── File upload card ── */
+  .card-upload {
+    padding: 32px; text-align: center;
+    border: 2px dashed var(--border); background: transparent;
+    cursor: pointer; transition: all .3s;
+  }
+  .card-upload:hover { border-color: var(--accent); background: rgba(108,92,231,.03); }
+  .card-upload .upload-icon { font-size: 36px; margin-bottom: 12px; opacity: .5; }
+  .card-upload h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .card-upload p { font-size: 12px; color: var(--text-3); }
+  .card-upload .upload-formats { font-size: 10px; color: var(--text-3); margin-top: 8px; }
+
+  /* ── Weather-style card ── */
+  .card-weather { padding: 24px; display: flex; align-items: center; justify-content: space-between; }
+  .weather-main { display: flex; align-items: center; gap: 16px; }
+  .weather-icon { font-size: 48px; }
+  .weather-temp { font-size: 36px; font-weight: 800; letter-spacing: -1px; }
+  .weather-details { text-align: right; }
+  .weather-details .wd-label { font-size: 11px; color: var(--text-3); }
+  .weather-details .wd-val { font-size: 13px; font-weight: 600; }
+
+  /* ── Onboarding step card ── */
+  .card-onboard { padding: 24px; display: flex; gap: 16px; align-items: flex-start; }
+  .onboard-num {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    display: grid; place-items: center; font-size: 14px; font-weight: 800;
+  }
+  .onboard-body h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .onboard-body p { font-size: 12px; color: var(--text-3); line-height: 1.6; }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="bg-noise"></div>
+
+<nav>
+  <div class="nav-logo">
+    <div class="nav-logo-icon">F</div>
+    <h1>Flex<span>Desk</span> UI</h1>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showSection('all')">All</button>
+    <button class="nav-tab" onclick="showSection('buttons')">Buttons</button>
+    <button class="nav-tab" onclick="showSection('cards')">Cards</button>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- ═══════════════ BUTTONS ═══════════════ -->
+
+  <div class="section" data-section="buttons">
+    <div class="section-header">
+      <h2>Buttons</h2>
+      <span class="count">50+ variants</span>
+      <p>Hover, click, and interact</p>
+    </div>
+
+    <!-- Core variants -->
+    <div class="play-label"><span class="dot"></span> Core Variants</div>
+    <div class="flex-wrap" style="margin-bottom:32px">
+      <button class="btn btn-primary btn-ripple">Primary</button>
+      <button class="btn btn-secondary">Secondary</button>
+      <button class="btn btn-ghost">Ghost</button>
+      <button class="btn btn-outline">Outline</button>
+      <button class="btn btn-danger">Danger</button>
+      <button class="btn btn-success">Success</button>
+      <button class="btn btn-glass">Glass</button>
+    </div>
+
+    <!-- Gradients -->
+    <div class="play-label"><span class="dot"></span> Gradients</div>
+    <div class="flex-wrap" style="margin-bottom:32px">
+      <button class="btn btn-gradient btn-ripple">Purple Pink</button>
+      <button class="btn btn-gradient-green btn-ripple">Green Cyan</button>
+      <button class="btn btn-gradient-warm btn-ripple">Warm Sunset</button>
+      <button class="btn btn-gradient btn-pill btn-ripple">Pill Gradient</button>
+      <button class="btn btn-gradient btn-shine btn-ripple">Shimmer</button>
+    </div>
+
+    <!-- Neon -->
+    <div class="play-label"><span class="dot"></span> Neon Glow</div>
+    <div class="flex-wrap" style="margin-bottom:32px">
+      <button class="btn btn-neon">Cyan Neon</button>
+      <button class="btn btn-neon-pink">Pink Neon</button>
+      <button class="btn btn-neon btn-pill">Pill Neon</button>
+    </div>
+
+    <!-- Animated -->
+    <div class="play-label"><span class="dot"></span> Animated</div>
+    <div class="flex-wrap" style="margin-bottom:32px">
+      <button class="btn btn-border-anim">Rotating Border</button>
+      <button class="btn btn-gradient btn-shine">Shine Effect</button>
+      <button class="btn btn-primary btn-loading"><span class="spinner"></span> Loading</button>
+      <button class="btn btn-magnetic btn-primary" data-magnetic>Magnetic</button>
+    </div>
+
+    <!-- Sizes -->
+    <div class="play-label"><span class="dot"></span> Sizes</div>
+    <div class="flex-wrap" style="margin-bottom:32px; align-items: center;">
+      <button class="btn btn-primary btn-xs">Extra Small</button>
+      <button class="btn btn-primary btn-sm">Small</button>
+      <button class="btn btn-primary">Default</button>
+      <button class="btn btn-primary btn-lg">Large</button>
+      <button class="btn btn-primary btn-xl">Extra Large</button>
+    </div>
+
+    <!-- Icon buttons -->
+    <div class="play-label"><span class="dot"></span> Icon Buttons</div>
+    <div class="flex-wrap" style="margin-bottom:32px">
+      <button class="btn btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="btn btn-icon round"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path d="M9 12l2 2 4-4"/></svg></button>
+      <button class="btn btn-icon" style="background:rgba(108,92,231,.15);color:var(--accent-light);border-color:rgba(108,92,231,.3)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg></button>
+      <button class="btn btn-icon round" style="background:rgba(255,85,85,.12);color:var(--red);border-color:rgba(255,85,85,.2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+      <button class="btn btn-primary btn-ripple" style="gap:6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Add New</button>
+      <button class="btn btn-secondary" style="gap:6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> Download</button>
+    </div>
+
+    <!-- Button group -->
+    <div class="play-label"><span class="dot"></span> Button Groups</div>
+    <div class="flex-wrap" style="margin-bottom:32px">
+      <div class="btn-group">
+        <button class="btn btn-secondary">Day</button>
+        <button class="btn btn-primary">Week</button>
+        <button class="btn btn-secondary">Month</button>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-secondary btn-sm">List</button>
+        <button class="btn btn-secondary btn-sm">Grid</button>
+        <button class="btn btn-secondary btn-sm">Map</button>
+      </div>
+    </div>
+
+    <!-- 3D / raised buttons -->
+    <div class="play-label"><span class="dot"></span> 3D / Raised Buttons</div>
+    <div class="flex-wrap" style="margin-bottom:32px">
+      <button class="btn btn-3d">Purple 3D</button>
+      <button class="btn btn-3d-green">Green 3D</button>
+      <button class="btn btn-3d-red">Red 3D</button>
+      <button class="btn btn-3d btn-pill">Pill 3D</button>
+      <button class="btn btn-3d btn-lg">Large 3D</button>
+    </div>
+
+    <!-- Split buttons -->
+    <div class="play-label"><span class="dot"></span> Split Buttons</div>
+    <div class="flex-wrap" style="margin-bottom:32px">
+      <div class="btn-split">
+        <button class="btn-split-main">Create Job</button>
+        <button class="btn-split-arrow">&#9660;</button>
+      </div>
+      <div class="btn-split" style="border-radius:var(--radius-sm);overflow:hidden">
+        <button class="btn-split-main" style="background:var(--green-dark)">Send Invoice</button>
+        <button class="btn-split-arrow" style="background:var(--green);border-color:rgba(255,255,255,.15)">&#9660;</button>
+      </div>
+      <div class="btn-split" style="border-radius:var(--radius-sm);overflow:hidden">
+        <button class="btn-split-main" style="background:var(--orange-dark)">Export</button>
+        <button class="btn-split-arrow" style="background:var(--orange);border-color:rgba(255,255,255,.15)">&#9660;</button>
+      </div>
+    </div>
+
+    <!-- Confirm buttons -->
+    <div class="play-label"><span class="dot"></span> Confirm (Two-Click) Buttons</div>
+    <div class="flex-wrap" style="margin-bottom:32px">
+      <button class="btn btn-danger btn-confirm" onclick="confirmBtn(this, 'Delete Job')">Delete Job</button>
+      <button class="btn btn-danger btn-confirm" onclick="confirmBtn(this, 'Remove User')">Remove User</button>
+      <button class="btn btn-secondary btn-confirm" onclick="confirmBtn(this, 'Cancel Subscription')">Cancel Subscription</button>
+    </div>
+
+    <!-- Counter buttons -->
+    <div class="play-label"><span class="dot"></span> Counter Buttons</div>
+    <div class="flex-wrap" style="margin-bottom:32px">
+      <button class="btn btn-primary btn-counter btn-ripple" onclick="incrementCounter(this)">
+        <span class="counter-label">Likes</span><span class="counter-val">24</span>
+      </button>
+      <button class="btn btn-gradient-green btn-counter btn-ripple" onclick="incrementCounter(this)">
+        <span class="counter-label">Upvote</span><span class="counter-val">108</span>
+      </button>
+      <button class="btn btn-secondary btn-counter" onclick="incrementCounter(this)">
+        <span class="counter-label">Starred</span><span class="counter-val">7</span>
+      </button>
+    </div>
+
+    <!-- Social buttons -->
+    <div class="play-label"><span class="dot"></span> Social / OAuth Buttons</div>
+    <div class="flex-wrap" style="margin-bottom:32px">
+      <button class="btn btn-social btn-google btn-ripple">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.96 10.96 0 001 12c0 1.77.42 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        Continue with Google
+      </button>
+      <button class="btn btn-social btn-github btn-ripple">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        Continue with GitHub
+      </button>
+      <button class="btn btn-social btn-slack btn-ripple">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M5.042 15.165a2.528 2.528 0 01-2.52 2.523A2.528 2.528 0 010 15.165a2.527 2.527 0 012.522-2.52h2.52v2.52zm1.271 0a2.527 2.527 0 012.521-2.52 2.527 2.527 0 012.521 2.52v6.313A2.528 2.528 0 018.834 24a2.528 2.528 0 01-2.521-2.522v-6.313zm2.521-10.123a2.528 2.528 0 01-2.521-2.52A2.528 2.528 0 018.834 0a2.528 2.528 0 012.521 2.522v2.52H8.834zm0 1.271a2.528 2.528 0 012.521 2.521 2.528 2.528 0 01-2.521 2.521H2.522A2.528 2.528 0 010 8.834a2.528 2.528 0 012.522-2.521h6.312zm10.122 2.521a2.528 2.528 0 012.522-2.521A2.528 2.528 0 0124 8.834a2.528 2.528 0 01-2.522 2.521h-2.522V8.834zm-1.268 0a2.528 2.528 0 01-2.523 2.521 2.527 2.527 0 01-2.52-2.521V2.522A2.527 2.527 0 0115.165 0a2.528 2.528 0 012.523 2.522v6.312zm-2.523 10.122a2.528 2.528 0 012.523 2.522A2.528 2.528 0 0115.165 24a2.527 2.527 0 01-2.52-2.522v-2.522h2.52zm0-1.268a2.527 2.527 0 01-2.52-2.523 2.527 2.527 0 012.52-2.52h6.313A2.528 2.528 0 0124 15.165a2.528 2.528 0 01-2.522 2.523h-6.313z"/></svg>
+        Continue with Slack
+      </button>
+    </div>
+
+    <!-- Chips / Tags -->
+    <div class="play-label"><span class="dot"></span> Chips / Tags</div>
+    <div class="flex-wrap" style="margin-bottom:32px">
+      <span class="chip chip-default">Default <span class="chip-close" onclick="this.parentElement.remove()">&times;</span></span>
+      <span class="chip chip-accent">HVAC <span class="chip-close" onclick="this.parentElement.remove()">&times;</span></span>
+      <span class="chip chip-green">Active</span>
+      <span class="chip chip-red">Overdue</span>
+      <span class="chip chip-blue">Plumbing</span>
+      <span class="chip chip-orange">Urgent</span>
+      <span class="chip chip-default">Electrical <span class="chip-close" onclick="this.parentElement.remove()">&times;</span></span>
+      <span class="chip chip-accent">Residential</span>
+      <span class="chip chip-green">Completed</span>
+    </div>
+
+    <!-- FAB -->
+    <div class="play-label"><span class="dot"></span> Floating Action Buttons</div>
+    <div class="flex-wrap" style="margin-bottom:32px;align-items:center">
+      <button class="fab fab-primary"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="fab fab-green"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg></button>
+      <button class="fab fab-primary fab-mini"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="fab fab-green fab-mini"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
+    </div>
+
+    <!-- Bell / badge -->
+    <div class="play-label"><span class="dot"></span> Notification Bells & Badges</div>
+    <div class="flex-wrap" style="margin-bottom:32px">
+      <button class="btn btn-icon btn-bell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg><span class="bell-badge">3</span></button>
+      <button class="btn btn-icon btn-bell round"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg><span class="bell-badge">9</span></button>
+      <button class="btn btn-icon btn-bell" style="background:rgba(108,92,231,.15);border-color:rgba(108,92,231,.3);color:var(--accent-light)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg><span class="bell-badge">12</span></button>
+    </div>
+
+    <!-- Breadcrumbs -->
+    <div class="play-label"><span class="dot"></span> Breadcrumb Buttons</div>
+    <div class="flex-wrap" style="margin-bottom:32px">
+      <div class="breadcrumb">
+        <button class="bread-item">Home</button>
+        <span class="bread-sep">/</span>
+        <button class="bread-item">Jobs</button>
+        <span class="bread-sep">/</span>
+        <button class="bread-item">HVAC Repair #1284</button>
+      </div>
+    </div>
+
+    <!-- Stepper -->
+    <div class="play-label"><span class="dot"></span> Stepper Buttons</div>
+    <div class="flex-wrap" style="margin-bottom:32px">
+      <div class="stepper">
+        <button class="step-btn done"><span class="step-num">&#10003;</span> Details</button>
+        <button class="step-btn active"><span class="step-num">2</span> Schedule</button>
+        <button class="step-btn"><span class="step-num">3</span> Assign</button>
+        <button class="step-btn"><span class="step-num">4</span> Confirm</button>
+      </div>
+    </div>
+
+    <!-- Submit animated -->
+    <div class="play-label"><span class="dot"></span> Animated Submit (Click Me)</div>
+    <div class="flex-wrap" style="margin-bottom:32px">
+      <button class="btn btn-primary btn-submit-anim btn-ripple" onclick="animateSubmit(this,'success')">Submit Job</button>
+      <button class="btn btn-gradient btn-submit-anim btn-ripple" onclick="animateSubmit(this,'success')">Save Changes</button>
+      <button class="btn btn-secondary btn-submit-anim" onclick="animateSubmit(this,'error')">Simulate Error</button>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════ CARDS ═══════════════ -->
+
+  <div class="section" data-section="cards">
+    <div class="section-header">
+      <h2>Cards</h2>
+      <span class="count">30+ designs</span>
+      <p>Hover to interact</p>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="play-label"><span class="dot"></span> Stat Cards</div>
+    <div class="grid grid-4" style="margin-bottom:32px">
+      <div class="card">
+        <div class="card-stat">
+          <div class="stat-icon" style="background:rgba(108,92,231,.12);color:var(--accent-light)">&#128188;</div>
+          <div class="stat-value">1,284</div>
+          <div class="stat-label">Active Jobs</div>
+          <div class="stat-change up">+12.5%</div>
+          <div class="stat-bar"><div class="stat-bar-fill" style="width:72%;background:var(--accent)"></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-stat">
+          <div class="stat-icon" style="background:rgba(0,210,160,.12);color:var(--green)">&#128176;</div>
+          <div class="stat-value">$48.2K</div>
+          <div class="stat-label">Revenue</div>
+          <div class="stat-change up">+8.3%</div>
+          <div class="stat-bar"><div class="stat-bar-fill" style="width:85%;background:var(--green)"></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-stat">
+          <div class="stat-icon" style="background:rgba(77,171,247,.12);color:var(--blue)">&#128101;</div>
+          <div class="stat-value">362</div>
+          <div class="stat-label">Customers</div>
+          <div class="stat-change up">+4.1%</div>
+          <div class="stat-bar"><div class="stat-bar-fill" style="width:60%;background:var(--blue)"></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-stat">
+          <div class="stat-icon" style="background:rgba(255,85,85,.12);color:var(--red)">&#9888;&#65039;</div>
+          <div class="stat-value">7</div>
+          <div class="stat-label">Overdue</div>
+          <div class="stat-change down">-2.4%</div>
+          <div class="stat-bar"><div class="stat-bar-fill" style="width:15%;background:var(--red)"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature cards -->
+    <div class="play-label"><span class="dot"></span> Feature Cards</div>
+    <div class="grid grid-3" style="margin-bottom:32px">
+      <div class="card card-feature">
+        <div class="feature-icon" style="background:rgba(108,92,231,.12);color:var(--accent-light)">&#128640;</div>
+        <h3>Smart Scheduling</h3>
+        <p>AI-powered route optimization and drag-and-drop calendar for your entire team.</p>
+        <div class="feature-link">Learn more <span>&rarr;</span></div>
+      </div>
+      <div class="card card-feature">
+        <div class="feature-icon" style="background:rgba(0,210,160,.12);color:var(--green)">&#9889;</div>
+        <h3>Real-Time Sync</h3>
+        <p>Offline-first architecture with IndexedDB sync. Works anywhere, syncs everywhere.</p>
+        <div class="feature-link">Learn more <span>&rarr;</span></div>
+      </div>
+      <div class="card card-feature">
+        <div class="feature-icon" style="background:rgba(255,139,62,.12);color:var(--orange)">&#128274;</div>
+        <h3>Multi-Tenant RLS</h3>
+        <p>Workspace-scoped row-level security via Prisma extensions. Data isolation by design.</p>
+        <div class="feature-link">Learn more <span>&rarr;</span></div>
+      </div>
+    </div>
+
+    <!-- Profile cards -->
+    <div class="play-label"><span class="dot"></span> Profile Cards</div>
+    <div class="grid grid-3" style="margin-bottom:32px">
+      <div class="card card-profile">
+        <div class="avatar">AD</div>
+        <h3>Alex Demo</h3>
+        <div class="role">Admin &middot; Owner</div>
+        <div class="profile-stats">
+          <div><div class="val">142</div><div class="lbl">Jobs</div></div>
+          <div><div class="val">38</div><div class="lbl">Clients</div></div>
+          <div><div class="val">4.9</div><div class="lbl">Rating</div></div>
+        </div>
+      </div>
+      <div class="card card-profile">
+        <div class="avatar" style="background:linear-gradient(135deg,var(--green-dark),var(--cyan))">JD</div>
+        <h3>John Davis</h3>
+        <div class="role">Technician &middot; HVAC</div>
+        <div class="profile-stats">
+          <div><div class="val">89</div><div class="lbl">Jobs</div></div>
+          <div><div class="val">24</div><div class="lbl">Clients</div></div>
+          <div><div class="val">4.7</div><div class="lbl">Rating</div></div>
+        </div>
+      </div>
+      <div class="card card-profile">
+        <div class="avatar" style="background:linear-gradient(135deg,var(--orange),var(--yellow))">MR</div>
+        <h3>Maria Rodriguez</h3>
+        <div class="role">Dispatcher</div>
+        <div class="profile-stats">
+          <div><div class="val">312</div><div class="lbl">Dispatched</div></div>
+          <div><div class="val">98%</div><div class="lbl">On-time</div></div>
+          <div><div class="val">5.0</div><div class="lbl">Rating</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pricing cards -->
+    <div class="play-label"><span class="dot"></span> Pricing Cards</div>
+    <div class="grid grid-3" style="margin-bottom:32px">
+      <div class="card card-pricing">
+        <div class="plan-badge">Starter</div>
+        <div class="price">$29<span>/mo</span></div>
+        <div class="price-sub">Per technician</div>
+        <ul class="plan-features">
+          <li><span class="check">&#10003;</span> Up to 5 technicians</li>
+          <li><span class="check">&#10003;</span> Job scheduling</li>
+          <li><span class="check">&#10003;</span> Customer portal</li>
+          <li><span class="check">&#10003;</span> Email support</li>
+        </ul>
+        <button class="btn btn-outline" style="width:100%">Get Started</button>
+      </div>
+      <div class="card card-pricing featured">
+        <div class="plan-badge pop">Most Popular</div>
+        <div class="price">$79<span>/mo</span></div>
+        <div class="price-sub">Per technician</div>
+        <ul class="plan-features">
+          <li><span class="check">&#10003;</span> Unlimited technicians</li>
+          <li><span class="check">&#10003;</span> AI scheduling</li>
+          <li><span class="check">&#10003;</span> Route optimization</li>
+          <li><span class="check">&#10003;</span> Priority support</li>
+          <li><span class="check">&#10003;</span> Custom invoicing</li>
+        </ul>
+        <button class="btn btn-gradient btn-shine btn-ripple" style="width:100%">Start Free Trial</button>
+      </div>
+      <div class="card card-pricing">
+        <div class="plan-badge">Enterprise</div>
+        <div class="price">Custom</div>
+        <div class="price-sub">Contact sales</div>
+        <ul class="plan-features">
+          <li><span class="check">&#10003;</span> Everything in Pro</li>
+          <li><span class="check">&#10003;</span> SSO / SAML</li>
+          <li><span class="check">&#10003;</span> Dedicated support</li>
+          <li><span class="check">&#10003;</span> Custom integrations</li>
+          <li><span class="check">&#10003;</span> SLA guarantee</li>
+        </ul>
+        <button class="btn btn-secondary" style="width:100%">Contact Sales</button>
+      </div>
+    </div>
+
+    <!-- Metric / dashboard cards -->
+    <div class="play-label"><span class="dot"></span> Dashboard Metric Cards</div>
+    <div class="grid grid-3" style="margin-bottom:32px">
+      <div class="card card-metric">
+        <div class="metric-header">
+          <h4>Jobs This Week</h4>
+          <span style="font-size:11px;color:var(--green)">+18%</span>
+        </div>
+        <div class="metric-value">47</div>
+        <div class="metric-chart" id="chart1"></div>
+      </div>
+      <div class="card card-metric">
+        <div class="metric-header">
+          <h4>Avg. Completion Time</h4>
+          <span style="font-size:11px;color:var(--blue)">2.4 hrs</span>
+        </div>
+        <div class="metric-value">2h 24m</div>
+        <div class="metric-chart" id="chart2"></div>
+      </div>
+      <div class="card card-metric">
+        <div class="metric-header">
+          <h4>Customer Satisfaction</h4>
+          <span style="font-size:11px;color:var(--accent-light)">+3.2%</span>
+        </div>
+        <div class="metric-value">96.4%</div>
+        <div class="metric-chart" id="chart3"></div>
+      </div>
+    </div>
+
+    <!-- Notification cards -->
+    <div class="play-label"><span class="dot"></span> Notification Cards</div>
+    <div class="flex-col" style="max-width:500px;margin-bottom:32px">
+      <div class="card card-notif">
+        <div class="notif-dot" style="background:var(--accent)"></div>
+        <div><h4>New job assigned</h4><p>HVAC repair at 142 Oak Street</p></div>
+        <span class="notif-time">2m ago</span>
+      </div>
+      <div class="card card-notif">
+        <div class="notif-dot" style="background:var(--green)"></div>
+        <div><h4>Invoice paid</h4><p>Invoice #1284 — $340.00 received</p></div>
+        <span class="notif-time">15m ago</span>
+      </div>
+      <div class="card card-notif">
+        <div class="notif-dot" style="background:var(--orange)"></div>
+        <div><h4>Estimate approved</h4><p>Kitchen remodel for Johnson residence</p></div>
+        <span class="notif-time">1h ago</span>
+      </div>
+    </div>
+
+    <!-- Hero / image cards -->
+    <div class="play-label"><span class="dot"></span> Hero Cards</div>
+    <div class="grid grid-2" style="margin-bottom:32px">
+      <div class="card card-hero">
+        <div class="hero-bg" style="background:linear-gradient(135deg,#1a1040 0%,#2d1b69 50%,#0f0c29 100%)"></div>
+        <div class="hero-content">
+          <h3>Dispatch Dashboard</h3>
+          <p>Real-time map view with live technician tracking and drag-and-drop job assignment.</p>
+          <button class="btn btn-glass btn-sm" style="margin-top:14px">Open Dashboard &rarr;</button>
+        </div>
+      </div>
+      <div class="card card-hero">
+        <div class="hero-bg" style="background:linear-gradient(135deg,#0a2e1f 0%,#0d3b26 50%,#051a0f 100%)"></div>
+        <div class="hero-content">
+          <h3>AI Agent</h3>
+          <p>24/7 automated customer communication via calls, texts, and smart follow-ups.</p>
+          <button class="btn btn-glass btn-sm" style="margin-top:14px">Configure Agent &rarr;</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Command / code cards -->
+    <div class="play-label"><span class="dot"></span> Command Cards</div>
+    <div class="flex-col" style="max-width:600px;margin-bottom:32px">
+      <div class="card card-command">
+        <span class="prompt">$</span>
+        <span class="cmd">pnpm dev:server</span>
+        <button class="copy-btn" onclick="copyCmd(this, 'pnpm dev:server')">Copy</button>
+      </div>
+      <div class="card card-command">
+        <span class="prompt">$</span>
+        <span class="cmd">pnpm dev:admin</span>
+        <button class="copy-btn" onclick="copyCmd(this, 'pnpm dev:admin')">Copy</button>
+      </div>
+      <div class="card card-command">
+        <span class="prompt">$</span>
+        <span class="cmd">nx run-many --target=build --all</span>
+        <button class="copy-btn" onclick="copyCmd(this, 'nx run-many --target=build --all')">Copy</button>
+      </div>
+    </div>
+
+    <!-- Glass cards -->
+    <div class="play-label"><span class="dot"></span> Glass Cards</div>
+    <div class="grid grid-3" style="margin-bottom:32px">
+      <div class="card card-glass" style="padding:24px">
+        <div style="font-size:28px;margin-bottom:12px">&#127968;</div>
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:6px">Properties</h3>
+        <p style="font-size:12px;color:var(--text-2)">Manage service locations, access history, and customer equipment records.</p>
+      </div>
+      <div class="card card-glass" style="padding:24px">
+        <div style="font-size:28px;margin-bottom:12px">&#128666;</div>
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:6px">Routing</h3>
+        <p style="font-size:12px;color:var(--text-2)">Optimize technician routes with AI-powered distance and time analysis.</p>
+      </div>
+      <div class="card card-glass" style="padding:24px">
+        <div style="font-size:28px;margin-bottom:12px">&#128202;</div>
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:6px">Reports</h3>
+        <p style="font-size:12px;color:var(--text-2)">Revenue, job completion, technician performance, and customer insights.</p>
+      </div>
+    </div>
+
+    <!-- Toggle cards -->
+    <div class="play-label"><span class="dot"></span> Toggle Cards</div>
+    <div class="flex-col" style="max-width:420px;margin-bottom:32px">
+      <div class="card card-toggle" onclick="toggleSwitch(this)">
+        <div class="toggle-info"><h4>Push Notifications</h4><p>Receive alerts for new jobs</p></div>
+        <div class="toggle-switch on"><div class="toggle-knob"></div></div>
+      </div>
+      <div class="card card-toggle" onclick="toggleSwitch(this)">
+        <div class="toggle-info"><h4>Auto-Schedule</h4><p>AI assigns jobs to available techs</p></div>
+        <div class="toggle-switch"><div class="toggle-knob"></div></div>
+      </div>
+      <div class="card card-toggle" onclick="toggleSwitch(this)">
+        <div class="toggle-info"><h4>Customer SMS</h4><p>Send automated appointment reminders</p></div>
+        <div class="toggle-switch on"><div class="toggle-knob"></div></div>
+      </div>
+    </div>
+
+    <!-- Skeleton cards -->
+    <div class="play-label"><span class="dot"></span> Skeleton / Loading Cards</div>
+    <div class="grid grid-3" style="margin-bottom:32px">
+      <div class="card card-skeleton">
+        <div class="skel skel-circle"></div>
+        <div class="skel skel-line w80"></div>
+        <div class="skel skel-line w60"></div>
+        <div class="skel skel-line w40"></div>
+      </div>
+      <div class="card card-skeleton">
+        <div class="skel" style="height:120px;border-radius:8px;margin-bottom:16px"></div>
+        <div class="skel skel-line w80"></div>
+        <div class="skel skel-line w60"></div>
+      </div>
+      <div class="card card-skeleton">
+        <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px">
+          <div class="skel" style="width:40px;height:40px;border-radius:50%;flex-shrink:0"></div>
+          <div style="flex:1"><div class="skel skel-line w60" style="margin-bottom:6px"></div><div class="skel skel-line w40"></div></div>
+        </div>
+        <div class="skel skel-line w80"></div>
+        <div class="skel skel-line w60"></div>
+      </div>
+    </div>
+
+    <!-- Timeline cards -->
+    <div class="play-label"><span class="dot"></span> Timeline Cards</div>
+    <div class="grid grid-2" style="margin-bottom:32px">
+      <div class="card card-timeline">
+        <div class="tl-item">
+          <div class="tl-dot" style="border-color:var(--green);color:var(--green)">&#10003;</div>
+          <div class="tl-content">
+            <h4>Job completed</h4>
+            <p>HVAC unit installed and tested at Johnson residence</p>
+            <div class="tl-time">Today, 2:45 PM</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="border-color:var(--blue);color:var(--blue)">&#9998;</div>
+          <div class="tl-content">
+            <h4>Invoice sent</h4>
+            <p>Invoice #1284 emailed to customer</p>
+            <div class="tl-time">Today, 3:10 PM</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="border-color:var(--accent);color:var(--accent)">&#128172;</div>
+          <div class="tl-content">
+            <h4>Follow-up scheduled</h4>
+            <p>Automated SMS reminder set for 7 days</p>
+            <div class="tl-time">Today, 3:15 PM</div>
+          </div>
+        </div>
+      </div>
+      <div class="card card-timeline">
+        <div class="tl-item">
+          <div class="tl-dot" style="border-color:var(--orange);color:var(--orange)">&#128666;</div>
+          <div class="tl-content">
+            <h4>Technician dispatched</h4>
+            <p>John Davis en route — ETA 25 min</p>
+            <div class="tl-time">9:15 AM</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="border-color:var(--cyan);color:var(--cyan)">&#128205;</div>
+          <div class="tl-content">
+            <h4>On site</h4>
+            <p>Arrived at 142 Oak Street</p>
+            <div class="tl-time">9:38 AM</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="border-color:var(--pink);color:var(--pink)">&#128248;</div>
+          <div class="tl-content">
+            <h4>Photos uploaded</h4>
+            <p>3 before/after photos added</p>
+            <div class="tl-time">11:20 AM</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat cards -->
+    <div class="play-label"><span class="dot"></span> Chat / Message Cards</div>
+    <div class="grid grid-2" style="margin-bottom:32px">
+      <div class="card card-chat">
+        <div class="chat-msg">
+          <div class="chat-avatar" style="background:linear-gradient(135deg,var(--blue),var(--cyan))">JD</div>
+          <div>
+            <div class="chat-bubble chat-bubble-in">Hey, I'm running about 15 min late to the next job. Traffic on I-95.</div>
+            <div class="chat-time">10:32 AM</div>
+          </div>
+        </div>
+        <div class="chat-msg outgoing">
+          <div class="chat-avatar" style="background:linear-gradient(135deg,var(--accent),var(--pink))">AD</div>
+          <div>
+            <div class="chat-bubble chat-bubble-out">No problem, I'll let the customer know. Drive safe!</div>
+            <div class="chat-time" style="text-align:right">10:33 AM</div>
+          </div>
+        </div>
+        <div class="chat-msg">
+          <div class="chat-avatar" style="background:linear-gradient(135deg,var(--blue),var(--cyan))">JD</div>
+          <div>
+            <div class="chat-bubble chat-bubble-in">Thanks boss. Parts are all ready to go.</div>
+            <div class="chat-time">10:34 AM</div>
+          </div>
+        </div>
+        <div class="chat-input-row">
+          <input class="chat-input" placeholder="Type a message...">
+          <button class="chat-send"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
+        </div>
+      </div>
+      <div class="card card-chat">
+        <div class="chat-msg">
+          <div class="chat-avatar" style="background:linear-gradient(135deg,var(--green),var(--cyan))">AI</div>
+          <div>
+            <div class="chat-bubble chat-bubble-in">Good morning! I handled 3 customer texts overnight. Mrs. Chen confirmed her appointment for Thursday at 2 PM.</div>
+            <div class="chat-time">7:00 AM</div>
+          </div>
+        </div>
+        <div class="chat-msg outgoing">
+          <div class="chat-avatar" style="background:linear-gradient(135deg,var(--accent),var(--pink))">AD</div>
+          <div>
+            <div class="chat-bubble chat-bubble-out">Great work. Any cancellations?</div>
+            <div class="chat-time" style="text-align:right">8:15 AM</div>
+          </div>
+        </div>
+        <div class="chat-msg">
+          <div class="chat-avatar" style="background:linear-gradient(135deg,var(--green),var(--cyan))">AI</div>
+          <div>
+            <div class="chat-bubble chat-bubble-in">None! All 8 appointments confirmed for today. I've sent reminder texts to everyone.</div>
+            <div class="chat-time">8:15 AM</div>
+          </div>
+        </div>
+        <div class="chat-input-row">
+          <input class="chat-input" placeholder="Ask the AI agent...">
+          <button class="chat-send" style="background:var(--green)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Task / progress cards -->
+    <div class="play-label"><span class="dot"></span> Task / Progress Cards</div>
+    <div class="grid grid-3" style="margin-bottom:32px">
+      <div class="card card-task">
+        <div class="task-header">
+          <h4>HVAC Installation</h4>
+          <span class="task-status status-progress">In Progress</span>
+        </div>
+        <div class="task-meta">Job #1284 &middot; Johnson Residence</div>
+        <div class="task-progress-bar"><div class="task-progress-fill" style="width:65%;background:var(--blue)"></div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div class="task-assignees">
+            <div class="task-assignee" style="background:linear-gradient(135deg,var(--blue),var(--cyan))">JD</div>
+            <div class="task-assignee" style="background:linear-gradient(135deg,var(--accent),var(--pink))">MR</div>
+          </div>
+          <span style="font-size:11px;color:var(--text-3)">65%</span>
+        </div>
+      </div>
+      <div class="card card-task">
+        <div class="task-header">
+          <h4>Kitchen Remodel</h4>
+          <span class="task-status status-review">In Review</span>
+        </div>
+        <div class="task-meta">Estimate #542 &middot; Davis Property</div>
+        <div class="task-progress-bar"><div class="task-progress-fill" style="width:90%;background:var(--yellow)"></div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div class="task-assignees">
+            <div class="task-assignee" style="background:linear-gradient(135deg,var(--orange),var(--yellow))">TS</div>
+          </div>
+          <span style="font-size:11px;color:var(--text-3)">90%</span>
+        </div>
+      </div>
+      <div class="card card-task">
+        <div class="task-header">
+          <h4>Plumbing Repair</h4>
+          <span class="task-status status-done">Completed</span>
+        </div>
+        <div class="task-meta">Job #1281 &middot; Elm Street</div>
+        <div class="task-progress-bar"><div class="task-progress-fill" style="width:100%;background:var(--green)"></div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div class="task-assignees">
+            <div class="task-assignee" style="background:linear-gradient(135deg,var(--green),var(--cyan))">AK</div>
+            <div class="task-assignee" style="background:linear-gradient(135deg,var(--pink),var(--red))">BL</div>
+          </div>
+          <span style="font-size:11px;color:var(--green)">100%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Testimonial cards -->
+    <div class="play-label"><span class="dot"></span> Testimonial Cards</div>
+    <div class="grid grid-2" style="margin-bottom:32px">
+      <div class="card card-testimonial">
+        <div class="testimonial-quote">FlexDesk completely transformed how we manage our field operations. Scheduling used to take hours, now it takes minutes.</div>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar" style="background:linear-gradient(135deg,var(--blue),var(--accent))">SK</div>
+          <div class="testimonial-info"><h5>Sarah Kim</h5><p>Operations Manager, CoolAir HVAC</p></div>
+          <div class="testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        </div>
+      </div>
+      <div class="card card-testimonial">
+        <div class="testimonial-quote">The AI agent handles our after-hours calls perfectly. We haven't missed a lead since we started using it.</div>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar" style="background:linear-gradient(135deg,var(--green),var(--cyan))">MJ</div>
+          <div class="testimonial-info"><h5>Mike Johnson</h5><p>Owner, FastFix Plumbing</p></div>
+          <div class="testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kanban cards -->
+    <div class="play-label"><span class="dot"></span> Kanban Task Cards</div>
+    <div class="grid grid-3" style="margin-bottom:32px">
+      <div class="card card-kanban">
+        <div class="kanban-labels">
+          <span class="kanban-label" style="background:rgba(255,85,85,.12);color:var(--red)">Urgent</span>
+          <span class="kanban-label" style="background:rgba(108,92,231,.12);color:var(--accent-light)">HVAC</span>
+        </div>
+        <div class="kanban-title">Emergency AC repair — no cooling</div>
+        <div class="kanban-desc">Customer reports AC unit blowing warm air. Compressor may need replacement.</div>
+        <div class="kanban-footer">
+          <div class="kanban-id">#JOB-1285</div>
+          <div class="task-assignees"><div class="task-assignee" style="background:linear-gradient(135deg,var(--blue),var(--cyan));width:24px;height:24px;font-size:9px">JD</div></div>
+        </div>
+      </div>
+      <div class="card card-kanban">
+        <div class="kanban-labels">
+          <span class="kanban-label" style="background:rgba(77,171,247,.12);color:var(--blue)">Plumbing</span>
+        </div>
+        <div class="kanban-title">Water heater installation</div>
+        <div class="kanban-desc">Replace 40-gallon gas water heater with tankless unit.</div>
+        <div class="kanban-footer">
+          <div class="kanban-id">#JOB-1286</div>
+          <div class="task-assignees">
+            <div class="task-assignee" style="background:linear-gradient(135deg,var(--green),var(--cyan));width:24px;height:24px;font-size:9px">AK</div>
+            <div class="task-assignee" style="background:linear-gradient(135deg,var(--orange),var(--yellow));width:24px;height:24px;font-size:9px">TS</div>
+          </div>
+        </div>
+      </div>
+      <div class="card card-kanban">
+        <div class="kanban-labels">
+          <span class="kanban-label" style="background:rgba(0,210,160,.12);color:var(--green)">Electrical</span>
+          <span class="kanban-label" style="background:rgba(255,212,59,.12);color:var(--yellow)">Estimate</span>
+        </div>
+        <div class="kanban-title">Panel upgrade — 100A to 200A</div>
+        <div class="kanban-desc">Customer needs panel upgrade to support new EV charger installation.</div>
+        <div class="kanban-footer">
+          <div class="kanban-id">#EST-543</div>
+          <div class="task-assignees"><div class="task-assignee" style="background:linear-gradient(135deg,var(--pink),var(--red));width:24px;height:24px;font-size:9px">BL</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Calendar event cards -->
+    <div class="play-label"><span class="dot"></span> Calendar Event Cards</div>
+    <div class="grid grid-3" style="margin-bottom:32px">
+      <div class="card card-event">
+        <div class="event-time" style="border-color:var(--accent)">
+          <div class="et-hour">9:00</div><div class="et-ampm">AM</div>
+        </div>
+        <div class="event-body">
+          <h4>HVAC Maintenance</h4>
+          <p>142 Oak Street, Apt 3B</p>
+          <span class="event-tag" style="background:rgba(108,92,231,.12);color:var(--accent-light)">Recurring</span>
+        </div>
+      </div>
+      <div class="card card-event">
+        <div class="event-time" style="border-color:var(--orange)">
+          <div class="et-hour">1:30</div><div class="et-ampm">PM</div>
+        </div>
+        <div class="event-body">
+          <h4>Estimate Walk-through</h4>
+          <p>Davis Property — Kitchen</p>
+          <span class="event-tag" style="background:rgba(255,139,62,.12);color:var(--orange)">On-site</span>
+        </div>
+      </div>
+      <div class="card card-event">
+        <div class="event-time" style="border-color:var(--green)">
+          <div class="et-hour">4:00</div><div class="et-ampm">PM</div>
+        </div>
+        <div class="event-body">
+          <h4>Follow-up Call</h4>
+          <p>Mrs. Chen — post-install check</p>
+          <span class="event-tag" style="background:rgba(0,210,160,.12);color:var(--green)">Phone</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Donut chart card -->
+    <div class="play-label"><span class="dot"></span> Donut Chart Cards</div>
+    <div class="grid grid-2" style="margin-bottom:32px">
+      <div class="card card-donut">
+        <div class="donut-wrap">
+          <svg viewBox="0 0 36 36">
+            <circle cx="18" cy="18" r="14" stroke="var(--surface-3)" />
+            <circle cx="18" cy="18" r="14" stroke="var(--accent)" stroke-dasharray="52 88" />
+            <circle cx="18" cy="18" r="14" stroke="var(--green)" stroke-dasharray="22 88" stroke-dashoffset="-52" />
+            <circle cx="18" cy="18" r="14" stroke="var(--orange)" stroke-dasharray="14 88" stroke-dashoffset="-74" />
+          </svg>
+          <div class="donut-center">88</div>
+        </div>
+        <div class="donut-legend">
+          <div style="font-size:14px;font-weight:700;margin-bottom:8px">Job Categories</div>
+          <div class="donut-legend-item"><div class="donut-legend-dot" style="background:var(--accent)"></div> HVAC — 59%</div>
+          <div class="donut-legend-item"><div class="donut-legend-dot" style="background:var(--green)"></div> Plumbing — 25%</div>
+          <div class="donut-legend-item"><div class="donut-legend-dot" style="background:var(--orange)"></div> Electrical — 16%</div>
+        </div>
+      </div>
+      <div class="card card-donut">
+        <div class="donut-wrap">
+          <svg viewBox="0 0 36 36">
+            <circle cx="18" cy="18" r="14" stroke="var(--surface-3)" />
+            <circle cx="18" cy="18" r="14" stroke="var(--green)" stroke-dasharray="75 88" />
+            <circle cx="18" cy="18" r="14" stroke="var(--yellow)" stroke-dasharray="8 88" stroke-dashoffset="-75" />
+            <circle cx="18" cy="18" r="14" stroke="var(--red)" stroke-dasharray="5 88" stroke-dashoffset="-83" />
+          </svg>
+          <div class="donut-center">96%</div>
+        </div>
+        <div class="donut-legend">
+          <div style="font-size:14px;font-weight:700;margin-bottom:8px">Completion Rate</div>
+          <div class="donut-legend-item"><div class="donut-legend-dot" style="background:var(--green)"></div> Completed — 85%</div>
+          <div class="donut-legend-item"><div class="donut-legend-dot" style="background:var(--yellow)"></div> In Progress — 9%</div>
+          <div class="donut-legend-item"><div class="donut-legend-dot" style="background:var(--red)"></div> Cancelled — 6%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status / alert cards -->
+    <div class="play-label"><span class="dot"></span> Status / Alert Cards</div>
+    <div class="flex-col" style="max-width:500px;margin-bottom:32px">
+      <div class="card card-status">
+        <div class="status-icon-box" style="background:rgba(0,210,160,.12);color:var(--green)">&#10003;</div>
+        <div><h4>Deployment successful</h4><p>flexdesk-server v2.4.1 deployed to production at 3:42 PM</p></div>
+      </div>
+      <div class="card card-status">
+        <div class="status-icon-box" style="background:rgba(255,212,59,.12);color:var(--yellow)">&#9888;</div>
+        <div><h4>API rate limit warning</h4><p>Google Maps API at 85% of daily quota. Consider upgrading your plan.</p></div>
+      </div>
+      <div class="card card-status">
+        <div class="status-icon-box" style="background:rgba(255,85,85,.12);color:var(--red)">&#10007;</div>
+        <div><h4>Payment failed</h4><p>Invoice #1278 payment declined. Card ending in 4242 expired.</p></div>
+      </div>
+      <div class="card card-status">
+        <div class="status-icon-box" style="background:rgba(77,171,247,.12);color:var(--blue)">&#8505;</div>
+        <div><h4>Scheduled maintenance</h4><p>Database optimization running tonight at 2:00 AM EST. No downtime expected.</p></div>
+      </div>
+    </div>
+
+    <!-- Accordion cards -->
+    <div class="play-label"><span class="dot"></span> Accordion / Expandable Cards</div>
+    <div class="flex-col" style="max-width:600px;margin-bottom:32px">
+      <div class="card card-accordion" onclick="toggleAccordion(this)">
+        <div class="accordion-header">
+          <h4>How does workspace isolation work?</h4>
+          <span class="accordion-arrow">&#9660;</span>
+        </div>
+        <div class="accordion-body">
+          <p>FlexDesk uses Prisma extensions to automatically scope all database queries to the current workspace. A WorkspaceInterceptor extracts the workspaceId from your JWT token, and the Prisma extension injects WHERE clauses on every read and sets workspaceId on every create operation.</p>
+        </div>
+      </div>
+      <div class="card card-accordion" onclick="toggleAccordion(this)">
+        <div class="accordion-header">
+          <h4>Can I use FlexDesk offline?</h4>
+          <span class="accordion-arrow">&#9660;</span>
+        </div>
+        <div class="accordion-body">
+          <p>Yes! FlexDesk uses an offline-first architecture with IndexedDB sync. Changes made while offline are queued and automatically synced when connectivity is restored. Conflict resolution handles any data discrepancies.</p>
+        </div>
+      </div>
+      <div class="card card-accordion" onclick="toggleAccordion(this)">
+        <div class="accordion-header">
+          <h4>What security measures are in place?</h4>
+          <span class="accordion-arrow">&#9660;</span>
+        </div>
+        <div class="accordion-body">
+          <p>FlexDesk includes rate limiting (100 req/60s), body size limits, Helmet security headers, CSP policies, workspace-scoped RLS, JWT auth with refresh tokens, and Google OAuth. A full security audit identified and fixed 60+ issues.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Checklist cards -->
+    <div class="play-label"><span class="dot"></span> Checklist Cards</div>
+    <div class="grid grid-2" style="margin-bottom:32px">
+      <div class="card card-checklist">
+        <h4 style="font-size:14px;font-weight:700;margin-bottom:14px">Pre-Install Checklist</h4>
+        <div class="check-item checked" onclick="toggleCheck(this)"><div class="check-box">&#10003;</div><span class="check-text">Verify equipment model</span></div>
+        <div class="check-item checked" onclick="toggleCheck(this)"><div class="check-box">&#10003;</div><span class="check-text">Check electrical requirements</span></div>
+        <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">&#10003;</div><span class="check-text">Confirm parts availability</span></div>
+        <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">&#10003;</div><span class="check-text">Customer walkthrough</span></div>
+        <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">&#10003;</div><span class="check-text">Take before photos</span></div>
+      </div>
+      <div class="card card-checklist">
+        <h4 style="font-size:14px;font-weight:700;margin-bottom:14px">Post-Job Closeout</h4>
+        <div class="check-item checked" onclick="toggleCheck(this)"><div class="check-box">&#10003;</div><span class="check-text">Upload completion photos</span></div>
+        <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">&#10003;</div><span class="check-text">Get customer signature</span></div>
+        <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">&#10003;</div><span class="check-text">Submit parts used</span></div>
+        <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">&#10003;</div><span class="check-text">Generate invoice</span></div>
+      </div>
+    </div>
+
+    <!-- Badge / achievement cards -->
+    <div class="play-label"><span class="dot"></span> Achievement / Badge Cards</div>
+    <div class="grid grid-4" style="margin-bottom:32px">
+      <div class="card card-badge-achieve">
+        <div class="badge-ring" style="background:rgba(108,92,231,.1)">&#127942;</div>
+        <h4>Top Performer</h4>
+        <p>50+ jobs completed this month</p>
+      </div>
+      <div class="card card-badge-achieve">
+        <div class="badge-ring" style="background:rgba(0,210,160,.1)">&#11088;</div>
+        <h4>5-Star Streak</h4>
+        <p>10 consecutive 5-star reviews</p>
+      </div>
+      <div class="card card-badge-achieve">
+        <div class="badge-ring" style="background:rgba(255,139,62,.1)">&#128293;</div>
+        <h4>Speed Demon</h4>
+        <p>Avg. completion under 2 hours</p>
+      </div>
+      <div class="card card-badge-achieve">
+        <div class="badge-ring" style="background:rgba(77,171,247,.1)">&#128640;</div>
+        <h4>Early Bird</h4>
+        <p>100% on-time arrival rate</p>
+      </div>
+    </div>
+
+    <!-- Activity feed card -->
+    <div class="play-label"><span class="dot"></span> Activity Feed Cards</div>
+    <div class="grid grid-2" style="margin-bottom:32px">
+      <div class="card card-activity">
+        <h4 style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px">Recent Activity</h4>
+        <div class="activity-item">
+          <div class="activity-avi" style="background:linear-gradient(135deg,var(--blue),var(--cyan))">JD</div>
+          <div class="activity-text"><strong>John Davis</strong> completed job <strong>#1284</strong> <br><span class="act-time">5 min ago</span></div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-avi" style="background:linear-gradient(135deg,var(--orange),var(--yellow))">MR</div>
+          <div class="activity-text"><strong>Maria Rodriguez</strong> dispatched <strong>3 jobs</strong> for tomorrow <br><span class="act-time">22 min ago</span></div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-avi" style="background:linear-gradient(135deg,var(--green),var(--cyan))">AI</div>
+          <div class="activity-text"><strong>FlexDesk Agent</strong> booked appointment with <strong>Mrs. Chen</strong> <br><span class="act-time">1 hr ago</span></div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-avi" style="background:linear-gradient(135deg,var(--accent),var(--pink))">AD</div>
+          <div class="activity-text"><strong>Alex Demo</strong> approved estimate <strong>#542</strong> <br><span class="act-time">2 hrs ago</span></div>
+        </div>
+      </div>
+      <div class="card card-activity">
+        <h4 style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px">System Log</h4>
+        <div class="activity-item">
+          <div class="activity-avi" style="background:rgba(0,210,160,.15);color:var(--green);font-size:14px">&#10003;</div>
+          <div class="activity-text">Backup completed — <strong>2.4 GB</strong> uploaded to S3 <br><span class="act-time">3:00 AM</span></div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-avi" style="background:rgba(77,171,247,.15);color:var(--blue);font-size:14px">&#8635;</div>
+          <div class="activity-text">Prisma migration <strong>#47</strong> applied successfully <br><span class="act-time">2:58 AM</span></div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-avi" style="background:rgba(255,212,59,.15);color:var(--yellow);font-size:14px">&#9888;</div>
+          <div class="activity-text">Memory usage at <strong>82%</strong> on production server <br><span class="act-time">Yesterday</span></div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-avi" style="background:rgba(108,92,231,.15);color:var(--accent-light);font-size:14px">&#128274;</div>
+          <div class="activity-text">SSL certificate renewed — expires <strong>Mar 2027</strong> <br><span class="act-time">2 days ago</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Location / map cards -->
+    <div class="play-label"><span class="dot"></span> Location / Map Cards</div>
+    <div class="grid grid-3" style="margin-bottom:32px">
+      <div class="card card-location">
+        <div class="location-map" style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%)">
+          <div class="map-pin">&#128205;</div>
+        </div>
+        <div class="location-body">
+          <h4>Johnson Residence</h4>
+          <p>142 Oak Street, Apt 3B</p>
+          <div class="loc-dist">2.4 mi away &middot; 8 min drive</div>
+        </div>
+      </div>
+      <div class="card card-location">
+        <div class="location-map" style="background:linear-gradient(135deg,#0a2e1f 0%,#0d3b26 100%)">
+          <div class="map-pin">&#128205;</div>
+        </div>
+        <div class="location-body">
+          <h4>Davis Commercial</h4>
+          <p>890 Industrial Blvd</p>
+          <div class="loc-dist">5.1 mi away &middot; 15 min drive</div>
+        </div>
+      </div>
+      <div class="card card-location">
+        <div class="location-map" style="background:linear-gradient(135deg,#2d1b69 0%,#1a1040 100%)">
+          <div class="map-pin">&#128205;</div>
+        </div>
+        <div class="location-body">
+          <h4>Chen Property</h4>
+          <p>55 Maple Avenue</p>
+          <div class="loc-dist">0.8 mi away &middot; 3 min drive</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty state card -->
+    <div class="play-label"><span class="dot"></span> Empty State Cards</div>
+    <div class="grid grid-2" style="margin-bottom:32px">
+      <div class="card card-empty">
+        <div class="empty-icon">&#128203;</div>
+        <h3>No jobs scheduled</h3>
+        <p>Your schedule is clear for today. Create a new job or check tomorrow's queue.</p>
+        <button class="btn btn-primary btn-sm btn-ripple">Create Job</button>
+      </div>
+      <div class="card card-empty">
+        <div class="empty-icon">&#128269;</div>
+        <h3>No results found</h3>
+        <p>Try adjusting your search filters or broadening your date range.</p>
+        <button class="btn btn-secondary btn-sm">Clear Filters</button>
+      </div>
+    </div>
+
+    <!-- File upload card -->
+    <div class="play-label"><span class="dot"></span> File Upload Cards</div>
+    <div class="grid grid-2" style="margin-bottom:32px">
+      <div class="card card-upload">
+        <div class="upload-icon">&#128228;</div>
+        <h4>Drop files here</h4>
+        <p>or click to browse your computer</p>
+        <div class="upload-formats">Supports: JPG, PNG, PDF up to 10MB</div>
+      </div>
+      <div class="card card-upload" style="border-color:var(--accent)">
+        <div class="upload-icon">&#128247;</div>
+        <h4>Upload job photos</h4>
+        <p>Before & after photos for documentation</p>
+        <div class="upload-formats">Supports: JPG, PNG, HEIC up to 25MB</div>
+      </div>
+    </div>
+
+    <!-- Weather card -->
+    <div class="play-label"><span class="dot"></span> Weather / Conditions Cards</div>
+    <div class="grid grid-2" style="margin-bottom:32px">
+      <div class="card card-weather">
+        <div class="weather-main">
+          <div class="weather-icon">&#9925;</div>
+          <div>
+            <div class="weather-temp">72&#176;</div>
+            <div style="font-size:12px;color:var(--text-3)">Partly Cloudy</div>
+          </div>
+        </div>
+        <div class="weather-details">
+          <div><span class="wd-label">Wind</span> <span class="wd-val">8 mph</span></div>
+          <div><span class="wd-label">Humidity</span> <span class="wd-val">45%</span></div>
+          <div><span class="wd-label">UV</span> <span class="wd-val">Moderate</span></div>
+        </div>
+      </div>
+      <div class="card card-weather" style="background:linear-gradient(135deg,rgba(77,171,247,.08),var(--surface))">
+        <div class="weather-main">
+          <div class="weather-icon">&#127783;&#65039;</div>
+          <div>
+            <div class="weather-temp">58&#176;</div>
+            <div style="font-size:12px;color:var(--text-3)">Rain Expected</div>
+          </div>
+        </div>
+        <div class="weather-details">
+          <div><span class="wd-label">Wind</span> <span class="wd-val">15 mph</span></div>
+          <div><span class="wd-label">Rain</span> <span class="wd-val">80%</span></div>
+          <div><span class="wd-label">Outdoor</span> <span class="wd-val" style="color:var(--orange)">Caution</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Onboarding step cards -->
+    <div class="play-label"><span class="dot"></span> Onboarding Step Cards</div>
+    <div class="flex-col" style="max-width:550px;margin-bottom:32px">
+      <div class="card card-onboard">
+        <div class="onboard-num" style="background:var(--accent);color:#fff">1</div>
+        <div class="onboard-body">
+          <h4>Create your workspace</h4>
+          <p>Set up your company name, logo, and default service categories.</p>
+        </div>
+      </div>
+      <div class="card card-onboard">
+        <div class="onboard-num" style="background:rgba(0,210,160,.15);color:var(--green)">2</div>
+        <div class="onboard-body">
+          <h4>Add your team</h4>
+          <p>Invite technicians and dispatchers with role-based permissions.</p>
+        </div>
+      </div>
+      <div class="card card-onboard">
+        <div class="onboard-num" style="background:rgba(255,139,62,.12);color:var(--orange)">3</div>
+        <div class="onboard-body">
+          <h4>Import customers</h4>
+          <p>Upload your customer list from CSV or connect your existing CRM.</p>
+        </div>
+      </div>
+      <div class="card card-onboard">
+        <div class="onboard-num" style="background:rgba(77,171,247,.12);color:var(--blue)">4</div>
+        <div class="onboard-body">
+          <h4>Schedule your first job</h4>
+          <p>Create a job, assign a technician, and see FlexDesk in action.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comparison card -->
+    <div class="play-label"><span class="dot"></span> Comparison Cards</div>
+    <div class="grid grid-2" style="margin-bottom:32px">
+      <div class="card card-comparison">
+        <div style="font-size:15px;font-weight:700;margin-bottom:16px">This Month vs Last Month</div>
+        <div class="comp-row" style="border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:4px">
+          <div class="comp-label comp-header">Metric</div>
+          <div class="comp-a comp-header" style="color:var(--accent-light)">Feb</div>
+          <div class="comp-b comp-header" style="color:var(--text-3)">Jan</div>
+        </div>
+        <div class="comp-row"><div class="comp-label">Total Jobs</div><div class="comp-a" style="color:var(--green)">142</div><div class="comp-b">128</div></div>
+        <div class="comp-row"><div class="comp-label">Revenue</div><div class="comp-a" style="color:var(--green)">$48.2K</div><div class="comp-b">$42.1K</div></div>
+        <div class="comp-row"><div class="comp-label">New Customers</div><div class="comp-a" style="color:var(--green)">28</div><div class="comp-b">22</div></div>
+        <div class="comp-row"><div class="comp-label">Avg. Rating</div><div class="comp-a">4.8</div><div class="comp-b">4.9</div></div>
+        <div class="comp-row"><div class="comp-label">Cancel Rate</div><div class="comp-a" style="color:var(--green)">3.2%</div><div class="comp-b" style="color:var(--red)">5.1%</div></div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  // ── Ripple effect ──
+  document.querySelectorAll('.btn-ripple').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      const rect = this.getBoundingClientRect();
+      const wave = document.createElement('span');
+      wave.className = 'ripple-wave';
+      const size = Math.max(rect.width, rect.height);
+      wave.style.width = wave.style.height = size + 'px';
+      wave.style.left = (e.clientX - rect.left - size / 2) + 'px';
+      wave.style.top = (e.clientY - rect.top - size / 2) + 'px';
+      this.appendChild(wave);
+      wave.addEventListener('animationend', () => wave.remove());
+    });
+  });
+
+  // ── Magnetic button ──
+  document.querySelectorAll('[data-magnetic]').forEach(btn => {
+    btn.addEventListener('mousemove', function(e) {
+      const rect = this.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      this.style.transform = `translate(${x * 0.2}px, ${y * 0.2}px)`;
+    });
+    btn.addEventListener('mouseleave', function() {
+      this.style.transform = '';
+    });
+  });
+
+  // ── Toggle switch ──
+  function toggleSwitch(card) {
+    const sw = card.querySelector('.toggle-switch');
+    sw.classList.toggle('on');
+  }
+
+  // ── Copy command ──
+  function copyCmd(btn, text) {
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'Copied!';
+      btn.style.color = 'var(--green)';
+      btn.style.borderColor = 'var(--green)';
+      setTimeout(() => {
+        btn.textContent = 'Copy';
+        btn.style.color = '';
+        btn.style.borderColor = '';
+      }, 1500);
+    });
+  }
+
+  // ── Mini bar charts ──
+  function buildChart(id, values, color) {
+    const container = document.getElementById(id);
+    if (!container) return;
+    const max = Math.max(...values);
+    values.forEach((v, i) => {
+      const bar = document.createElement('div');
+      bar.className = 'bar';
+      bar.style.height = '0%';
+      bar.style.background = color;
+      bar.style.opacity = 0.4 + (v / max) * 0.6;
+      container.appendChild(bar);
+      setTimeout(() => { bar.style.height = (v / max * 100) + '%'; }, 80 * i);
+    });
+  }
+  buildChart('chart1', [5,8,4,9,7,12,6,10,8,14,6,9], 'var(--accent)');
+  buildChart('chart2', [3,5,4,3,6,4,5,3,4,6,5,4], 'var(--blue)');
+  buildChart('chart3', [90,88,92,91,94,93,96,95,94,97,96,96], 'var(--green)');
+
+  // ── Section filter ──
+  function showSection(which) {
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    document.querySelectorAll('.section').forEach(s => {
+      if (which === 'all') { s.style.display = ''; return; }
+      s.style.display = s.dataset.section === which ? '' : 'none';
+    });
+  }
+
+  // ── Confirm button ──
+  function confirmBtn(btn, label) {
+    if (btn.classList.contains('confirming')) {
+      btn.textContent = 'Done!';
+      btn.style.background = 'rgba(0,210,160,.15)';
+      btn.style.color = 'var(--green)';
+      btn.style.borderColor = 'var(--green)';
+      btn.classList.remove('confirming');
+      setTimeout(() => { btn.textContent = label; btn.style = ''; }, 1500);
+    } else {
+      btn.classList.add('confirming');
+      btn.textContent = 'Click again to confirm';
+      setTimeout(() => { if (btn.classList.contains('confirming')) { btn.classList.remove('confirming'); btn.textContent = label; } }, 3000);
+    }
+  }
+
+  // ── Counter button ──
+  function incrementCounter(btn) {
+    const val = btn.querySelector('.counter-val');
+    val.textContent = parseInt(val.textContent) + 1;
+  }
+
+  // ── Animated submit ──
+  function animateSubmit(btn, result) {
+    const original = btn.textContent;
+    btn.textContent = '';
+    const spinner = document.createElement('span');
+    spinner.className = 'spinner';
+    spinner.style.width = '16px';
+    spinner.style.height = '16px';
+    spinner.style.border = '2px solid rgba(255,255,255,.3)';
+    spinner.style.borderTopColor = '#fff';
+    spinner.style.borderRadius = '50%';
+    spinner.style.animation = 'spin .6s linear infinite';
+    btn.appendChild(spinner);
+    btn.style.pointerEvents = 'none';
+    setTimeout(() => {
+      btn.removeChild(spinner);
+      btn.classList.add(result);
+      btn.textContent = result === 'success' ? '&#10003; Success!' : '&#10007; Failed';
+      btn.innerHTML = result === 'success' ? '&#10003; Success!' : '&#10007; Failed';
+      setTimeout(() => { btn.classList.remove(result); btn.textContent = original; btn.style.pointerEvents = ''; }, 1500);
+    }, 1200);
+  }
+
+  // ── Accordion toggle ──
+  function toggleAccordion(el) { el.classList.toggle('open'); }
+
+  // ── Checklist toggle ──
+  function toggleCheck(el) { el.classList.toggle('checked'); }
+
+  // ── Animate stat bars on scroll ──
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.querySelectorAll('.stat-bar-fill').forEach(bar => {
+          const w = bar.style.width;
+          bar.style.width = '0';
+          setTimeout(() => { bar.style.width = w; }, 100);
+        });
+      }
+    });
+  }, { threshold: 0.3 });
+  document.querySelectorAll('.card-stat').forEach(c => observer.observe(c));
+</script>
+
+</body>
+</html>

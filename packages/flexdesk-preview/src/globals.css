@@ -1,0 +1,190 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+  --color-sidebar: hsl(var(--sidebar-background));
+  --color-sidebar-background: hsl(var(--sidebar-background));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  :root {
+    /* Jobber Color Palette */
+    --background: 40 20% 98%; /* #F9F8F6 - warm off-white */
+    --foreground: 195 90% 12%; /* #032B3A - dark teal */
+    --card: 0 0% 100%;
+    --card-foreground: 195 90% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 195 90% 12%;
+
+    /* Atlantis Component Variables */
+    --color-surface: 0 0% 100%; /* White background for components */
+    --color-surface--hover: 40 14% 96%; /* Hover state */
+    --color-surface--active: 40 14% 93%; /* Active/pressed state */
+    --color-text: 195 90% 12%; /* Main text color */
+    --color-text--secondary: 195 16% 43%; /* Secondary text */
+    --color-critical: 6 65% 51%; /* Destructive/critical actions */
+    --color-border: 200 12% 87%; /* Border color */
+
+    /* Light Green Primary */
+    --primary: 142 70% 45%; /* #22C55E - light green */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 40 14% 96%; /* #F1F0E9 - warm gray */
+    --secondary-foreground: 198 35% 21%; /* #233D48 */
+
+    --muted: 40 14% 96%;
+    --muted-foreground: 195 16% 43%; /* #5D757E */
+
+    --accent: 138 76% 95%; /* #DCFCE7 - light green tint */
+    --accent-foreground: 142 70% 25%; /* #166534 - dark green */
+
+    --destructive: 6 65% 51%; /* #D24232 */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 200 12% 87%; /* #DADFE2 */
+    --input: 200 12% 87%;
+    --ring: 142 70% 45%; /* Green for focus */
+
+    --radius: 0.5rem;
+
+    --chart-1: 142 70% 45%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+
+    /* Chart component variables */
+    --chart-grid: 240 5.9% 90%;
+    --chart-tooltip-bg: 0 0% 100%;
+    --chart-tooltip-border: 240 5.9% 90%;
+
+    /* Sidebar - Dark theme with green accent */
+    --sidebar-background: 195 90% 12%; /* #032B3A */
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 142 70% 45%; /* Green */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 205 100% 67%; /* #57B9FF - Figma light blue */
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 198 35% 21%;
+    --sidebar-ring: 142 70% 45%; /* Green */
+  }
+
+  .dark {
+    --background: 195 30% 8%;
+    --foreground: 0 0% 98%;
+    --card: 195 25% 12%;
+    --card-foreground: 0 0% 98%;
+    --popover: 195 25% 12%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 142 70% 50%; /* Slightly brighter green for dark mode */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 195 20% 18%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 195 20% 18%;
+    --muted-foreground: 195 10% 60%;
+    --accent: 142 40% 20%;
+    --accent-foreground: 142 60% 70%;
+    --destructive: 6 65% 45%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 195 20% 22%;
+    --input: 195 20% 22%;
+    --ring: 142 70% 50%;
+
+    /* Atlantis Component Variables - Dark Mode */
+    --color-surface: 195 25% 12%; /* Card background */
+    --color-surface--hover: 195 20% 18%; /* Hover state */
+    --color-surface--active: 195 20% 22%; /* Active/pressed state */
+    --color-text: 0 0% 98%; /* Main text color */
+    --color-text--secondary: 195 10% 60%; /* Secondary text */
+    --color-critical: 6 65% 45%; /* Destructive/critical actions */
+    --color-border: 195 20% 22%; /* Border color */
+    --sidebar-background: 195 35% 6%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 142 70% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 205 100% 67%; /* #57B9FF - Figma light blue */
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 195 25% 15%;
+    --sidebar-ring: 142 70% 50%;
+
+    /* Chart component variables - dark mode */
+    --chart-grid: 240 3.7% 25%;
+    --chart-tooltip-bg: 195 25% 12%;
+    --chart-tooltip-border: 195 20% 22%;
+  }
+}
+
+/* Jobber Typography */
+@layer base {
+  h1 {
+    font-weight: 900;
+    letter-spacing: -0.02em;
+  }
+
+  h2, h3 {
+    font-weight: 700;
+  }
+}
+
+/* Note: Custom jobber-* component styles have been migrated to Atlantis components.
+   Button styles → Atlantis Button component
+   Input styles → Tailwind classes (h-[3.75rem] py-3.5 px-4)
+   Section styles → Tailwind classes (py-6 border-b border-border/50)
+   Collapsible styles → Atlantis Card component
+*/
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+}
+
+/* Table styling - use card background for dark theme consistency */
+@layer components {
+  [data-slot="table-container"] {
+    background-color: hsl(var(--card));
+    border-radius: var(--radius);
+  }
+
+  table {
+    background-color: hsl(var(--card));
+  }
+}

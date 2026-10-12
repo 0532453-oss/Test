@@ -1,0 +1,52 @@
+// Import variables first (also injected via Vite config)
+@use 'variables' as *;
+
+// CoreUI styles - wrapped in CSS layer so Tailwind utilities take precedence
+@layer coreui {
+  @import '@coreui/coreui/scss/coreui';
+}
+
+// Custom overrides
+.sidebar {
+  --cui-sidebar-bg: #{$sidebar-bg};
+  --cui-sidebar-nav-link-color: #{$sidebar-nav-link-color};
+  --cui-sidebar-nav-link-hover-bg: #{$sidebar-nav-link-hover-bg};
+  --cui-sidebar-nav-link-hover-color: #{$sidebar-nav-link-hover-color};
+  --cui-sidebar-nav-link-active-bg: #{$sidebar-nav-link-active-bg};
+  --cui-sidebar-nav-link-active-color: #{$sidebar-nav-link-active-color};
+}
+
+.card {
+  border: none;
+  box-shadow: $card-box-shadow;
+}
+
+// Utility classes
+.text-medium-emphasis {
+  color: $gray-600;
+}
+
+// Focus visible for accessibility
+:focus-visible {
+  outline: 2px solid $primary;
+  outline-offset: 2px;
+}
+
+// Smooth scrolling
+html {
+  scroll-behavior: smooth;
+}
+
+// Better link styling
+a {
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// Nav links shouldn't have underline on hover
+.nav-link:hover {
+  text-decoration: none;
+}

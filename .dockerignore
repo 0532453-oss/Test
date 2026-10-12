@@ -1,0 +1,47 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Build outputs
+.next
+**/dist
+**/coverage
+
+# Version control
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+
+# Documentation
+*.md
+docs/
+prd/
+RalphPRD/
+
+# Frontend packages (not needed for server Docker build)
+packages/flexdesk-admin
+packages/flexdesk-front
+packages/flexdesk-maps
+packages/flexdesk-portal
+packages/flexdesk-preview
+packages/flexdesk-preview-v2
+packages/flexdesk-website
+packages/flexdesk-agent
+packages/flexdesk-analytics
+packages/flexdesk-cli
+packages/flexdesk-web-admin
+packages/flexdesk-ui
+packages/atlantis
+packages/coreui-template-reference
+packages/create-flexdesk-app
+
+# Misc
+.claude
+.env
+.env.*
+!.env.example
+scripts/
+docker-compose.yml

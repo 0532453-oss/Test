@@ -1,0 +1,1 @@
+// Recurrence pattern constants

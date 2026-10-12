@@ -1,0 +1,3 @@
+Contact: https://github.com/Paulo-BatistaFerraz/FlexDesk/issues/new
+Preferred-Languages: en
+Policy: https://github.com/Paulo-BatistaFerraz/FlexDesk/security/policy

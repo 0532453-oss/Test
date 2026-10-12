@@ -1,0 +1,687 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Neon Postgres Connection Pooling
+// ---------------------------------
+// For Neon serverless Postgres, use two connection strings:
+//
+// DATABASE_URL  – The **pooled** connection string (via PgBouncer).
+//   Use the "-pooler" hostname and append query params:
+//   ?pgbouncer=true&connection_limit=10
+//   Example: postgresql://user:pass@ep-xxx-pooler.us-east-2.aws.neon.tech/flexdesk?pgbouncer=true&connection_limit=10
+//
+// DIRECT_URL – The **direct** (non-pooled) connection string.
+//   Required for `prisma migrate deploy` and `prisma db push` which
+//   use features incompatible with PgBouncer (advisory locks, temp tables).
+//   Example: postgresql://user:pass@ep-xxx.us-east-2.aws.neon.tech/flexdesk?sslmode=require
+//
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Enable Row Level Security (RLS) for multi-tenant isolation
+// All queries will be scoped by workspaceId via Prisma middleware
+
+// Workspace & Users
+model Workspace {
+  id            String   @id @default(uuid())
+  name          String
+  subdomain     String   @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Stripe subscription fields
+  stripeCustomerId     String?   // Stripe Customer ID (cus_xxx)
+  stripeSubscriptionId String?   // Stripe Subscription ID (sub_xxx)
+  subscriptionTier     String?   // Tier ID: 'starter', 'professional', 'enterprise'
+  subscriptionStatus   String?   // Status: 'active', 'canceled', 'past_due', 'trialing', etc.
+  subscriptionInterval String?   // Billing interval: 'month' or 'year'
+  subscriptionCurrentPeriodEnd DateTime? // When the current billing period ends
+
+  members       WorkspaceMember[]
+  jobs          Job[]
+  customers     Customer[]
+  technicians   Technician[]
+  invoices      Invoice[]
+  recurringJobTemplates RecurringJobTemplate[]
+  estimates     Estimate[]
+  properties    Property[]
+  parts         Part[]
+  roles         Role[]
+
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
+  @@map("workspaces")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  firstName     String?
+  lastName      String?
+  avatarUrl     String?
+  passwordHash  String?
+  authProvider  String?  @default("email") // 'email', 'google', etc.
+  refreshToken  String?
+  lastLoginAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  workspaces    WorkspaceMember[]
+  technician    Technician?
+
+  @@map("users")
+}
+
+model WorkspaceMember {
+  id          String   @id @default(uuid())
+  workspaceId String
+  userId      String
+  role        String   // Legacy: 'OWNER', 'ADMIN', 'MEMBER', 'TECHNICIAN'
+  roleId      String?  // New: reference to Role for granular permissions
+  createdAt   DateTime @default(now())
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleRef     Role?     @relation(fields: [roleId], references: [id], onDelete: SetNull)
+
+  @@unique([workspaceId, userId])
+  @@index([roleId])
+  @@map("workspace_members")
+}
+
+enum SyncStatus {
+  PENDING       // Queued for sync
+  SYNCING       // Currently syncing
+  SYNCED        // Successfully synced
+  CONFLICT      // Sync conflict detected
+  FAILED        // Sync failed
+}
+
+enum JobStatus {
+  SCHEDULED
+  DISPATCHED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  ON_HOLD
+}
+
+enum JobPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// FSM Core Models
+model Job {
+  id              String      @id @default(uuid())
+  workspaceId     String      // RLS: Always filter by workspaceId
+  customerId      String
+  technicianId    String?
+  propertyId      String?     // Optional reference to specific property/location
+
+  title           String
+  description     String?
+  status          JobStatus   @default(SCHEDULED)
+  priority        JobPriority @default(MEDIUM)
+
+  // Legacy single datetime field (kept for backwards compatibility)
+  scheduledAt     DateTime?
+
+  // New scheduling fields for calendar integration
+  scheduledDate       String?   // Format: YYYY-MM-DD
+  scheduledStartTime  String?   // Format: HH:mm
+  scheduledEndTime    String?   // Format: HH:mm
+
+  startedAt       DateTime?
+  completedAt     DateTime?
+
+  location        Json?       // { address, lat, lng } - Legacy, prefer property reference
+  estimatedDuration Int?      // minutes
+
+  // Recurring job relationship
+  recurringTemplateId String? // If generated from template
+  recurringTemplate   RecurringJobTemplate? @relation("GeneratedFromTemplate", fields: [recurringTemplateId], references: [id], onDelete: SetNull)
+
+  // Sync metadata for offline support
+  syncStatus      SyncStatus  @default(PENDING)
+  lastSyncedAt    DateTime?
+  syncVersion     Int         @default(0) // Optimistic locking
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  workspace       Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  customer        Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  technician      Technician? @relation(fields: [technicianId], references: [id], onDelete: SetNull)
+  property        Property?   @relation("JobProperty", fields: [propertyId], references: [id], onDelete: SetNull)
+  invoice         Invoice?
+  jobNotes        JobNote[]
+  jobAttachments  JobAttachment[]
+  estimateSource  Estimate?   @relation("EstimateToJob")
+  jobParts        JobPart[]   // Parts used in this job
+
+  @@index([workspaceId, status])
+  @@index([technicianId, status])
+  @@index([workspaceId, scheduledAt]) // For sync engine date filtering
+  @@index([propertyId])
+  @@unique([recurringTemplateId, scheduledAt]) // Idempotency: prevent duplicate jobs for same template/date
+  @@map("jobs")
+}
+
+model Technician {
+  id            String   @id @default(uuid())
+  workspaceId   String
+  userId        String   @unique
+
+  phone         String?
+  licenseNumber String?
+  specialties   String[] // Array of specialty tags
+
+  currentLocation Json?  // { lat, lng, updatedAt }
+  isAvailable    Boolean @default(true)
+
+  // Stripe Connect fields
+  stripeAccountId      String?   // Stripe Express account ID (acct_xxx)
+  stripeChargesEnabled Boolean   @default(false) // Whether the account can accept charges
+  stripeOnboardingComplete Boolean @default(false) // Whether onboarding is complete
+
+  // Sync metadata
+  syncStatus      SyncStatus  @default(PENDING)
+  lastSyncedAt    DateTime?
+  syncVersion     Int         @default(0)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobs          Job[]
+  recurringJobTemplates RecurringJobTemplate[]
+
+  @@index([workspaceId])
+  @@index([stripeAccountId])
+  @@map("technicians")
+}
+
+model Customer {
+  id            String   @id @default(uuid())
+  workspaceId   String
+
+  name          String
+  email         String?
+  phone         String?
+  address       Json?    // { street, city, state, zip, lat, lng } - Legacy, prefer properties
+
+  // Sync metadata
+  syncStatus      SyncStatus  @default(PENDING)
+  lastSyncedAt    DateTime?
+  syncVersion     Int         @default(0)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  jobs          Job[]
+  invoices      Invoice[]
+  recurringJobTemplates RecurringJobTemplate[]
+  estimates     Estimate[]
+  properties    Property[]  // Multiple service locations per customer
+  notificationPreference NotificationPreference?
+
+  @@index([workspaceId])
+  @@map("customers")
+}
+
+// Customer Notification Preferences
+model NotificationPreference {
+  id            String   @id @default(uuid())
+  customerId    String   @unique
+
+  // Channel preferences
+  emailEnabled  Boolean  @default(true)
+  smsEnabled    Boolean  @default(true)
+  pushEnabled   Boolean  @default(false)
+
+  // Notification type preferences
+  jobDispatched        Boolean @default(true)   // Notify when technician dispatched
+  jobReminder          Boolean @default(true)   // Remind before scheduled job
+  jobCompleted         Boolean @default(true)   // Notify when job completed
+  invoiceSent          Boolean @default(true)   // Notify when invoice sent
+  paymentReceived      Boolean @default(true)   // Confirm payment received
+  estimateSent         Boolean @default(true)   // Notify when estimate sent
+  estimateFollowUp     Boolean @default(false)  // Follow-up on pending estimates
+  marketingMessages    Boolean @default(false)  // Promotional/marketing messages
+
+  // Timing preferences
+  reminderHoursBefore  Int     @default(24)     // Hours before job to send reminder
+  quietHoursStart      String? @default("21:00") // Don't send after (24h format, local time)
+  quietHoursEnd        String? @default("08:00") // Don't send before (24h format, local time)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  customer      Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
+// Property model for multiple service locations per customer
+model Property {
+  id            String   @id @default(uuid())
+  workspaceId   String
+  customerId    String
+
+  name          String   // E.g., "Main Office", "Warehouse", "Home"
+  isPrimary     Boolean  @default(false) // Primary service location
+
+  // Address details
+  street        String?
+  street2       String?  // Apartment/Suite/Unit
+  city          String?
+  state         String?
+  zip           String?
+  country       String?  @default("US")
+
+  // Geolocation for routing/geofencing
+  lat           Float?
+  lng           Float?
+
+  // Property-specific notes
+  accessNotes   String?  // Gate codes, parking info, etc.
+  serviceNotes  String?  // Equipment on-site, special instructions
+
+  // Sync metadata
+  syncStatus    SyncStatus  @default(PENDING)
+  lastSyncedAt  DateTime?
+  syncVersion   Int         @default(0)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  customer      Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  jobs          Job[]     @relation("JobProperty")
+  recurringJobTemplates RecurringJobTemplate[] @relation("RecurringJobTemplateProperty")
+
+  @@index([workspaceId])
+  @@index([customerId])
+  @@map("properties")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+model Invoice {
+  id            String        @id @default(uuid())
+  workspaceId   String
+  jobId         String        @unique
+  customerId    String
+  
+  invoiceNumber String
+  status        InvoiceStatus @default(DRAFT)
+  amount        Decimal       @db.Decimal(10, 2)
+  tax           Decimal       @default(0) @db.Decimal(10, 2)
+  total         Decimal       @db.Decimal(10, 2)
+  
+  dueDate       DateTime?
+  paidAt        DateTime?
+  
+  stripePaymentId String?
+  
+  // Sync metadata
+  syncStatus      SyncStatus  @default(PENDING)
+  lastSyncedAt    DateTime?
+  syncVersion     Int         @default(0)
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  workspace     Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  job          Job            @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  customer     Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  lineItems    InvoiceLineItem[]
+  
+  @@unique([workspaceId, invoiceNumber])
+  @@index([workspaceId])
+  @@map("invoices")
+}
+
+model InvoiceLineItem {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  
+  description String
+  quantity    Decimal  @db.Decimal(10, 2)
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  total       Decimal  @db.Decimal(10, 2)
+  
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  
+  @@map("invoice_line_items")
+}
+
+model JobNote {
+  id          String   @id @default(uuid())
+  jobId       String
+  userId      String
+  
+  content     String
+  isInternal  Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  
+  @@index([jobId])
+  @@map("job_notes")
+}
+
+model JobAttachment {
+  id          String   @id @default(uuid())
+  jobId       String
+  
+  fileName    String
+  fileUrl     String
+  fileSize    Int
+  mimeType    String
+  
+  createdAt   DateTime @default(now())
+  
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  
+  @@index([jobId])
+  @@map("job_attachments")
+}
+
+model RecurringJobTemplate {
+  id              String   @id @default(uuid())
+  workspaceId     String
+  customerId      String
+  technicianId    String?
+  propertyId      String?  // Optional reference to specific property/location
+
+  title           String
+  description     String?
+  priority        JobPriority @default(MEDIUM)
+
+  // Recurrence rules
+  frequency       String   // 'WEEKLY', 'BIWEEKLY', 'MONTHLY', 'CUSTOM'
+  interval        Int      @default(1) // Every N weeks/months
+  dayOfWeek       Int?     // 0-6 (Sunday-Saturday) for weekly
+  dayOfMonth      Int?     // 1-31 for monthly
+  startDate       DateTime
+  endDate         DateTime?
+  nextRunDate     DateTime
+
+  // Job template
+  estimatedDuration Int?   // minutes
+  location        Json?    // Default location - Legacy, prefer property reference
+
+  // Status
+  isActive        Boolean  @default(true)
+
+  // Sync metadata for offline support
+  syncStatus      SyncStatus  @default(PENDING)
+  lastSyncedAt    DateTime?
+  syncVersion     Int         @default(0) // Optimistic locking for sync conflict detection
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  customer        Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  technician      Technician? @relation(fields: [technicianId], references: [id], onDelete: SetNull)
+  property        Property?   @relation("RecurringJobTemplateProperty", fields: [propertyId], references: [id], onDelete: SetNull)
+  generatedJobs   Job[]    @relation("GeneratedFromTemplate")
+
+  @@index([workspaceId, nextRunDate])
+  @@index([workspaceId, isActive])
+  @@index([propertyId])
+  @@map("recurring_job_templates")
+}
+
+// Estimates / Quotes
+enum EstimateStatus {
+  DRAFT           // Being prepared
+  SENT            // Sent to customer
+  VIEWED          // Customer has viewed
+  ACCEPTED        // Customer accepted
+  REJECTED        // Customer rejected
+  EXPIRED         // Past expiry date
+  CONVERTED       // Converted to job
+}
+
+model Estimate {
+  id              String         @id @default(uuid())
+  workspaceId     String
+  customerId      String
+
+  estimateNumber  String
+  status          EstimateStatus @default(DRAFT)
+
+  title           String
+  description     String?
+
+  // Pricing
+  subtotal        Decimal        @db.Decimal(10, 2)
+  tax             Decimal        @default(0) @db.Decimal(10, 2)
+  discount        Decimal        @default(0) @db.Decimal(10, 2)
+  total           Decimal        @db.Decimal(10, 2)
+
+  // Dates
+  validUntil      DateTime?      // Expiry date
+  sentAt          DateTime?
+  viewedAt        DateTime?
+  respondedAt     DateTime?      // Accepted or rejected
+
+  // Job details (for when converted)
+  estimatedDuration Int?         // minutes
+  location        Json?          // { address, lat, lng }
+  priority        JobPriority    @default(MEDIUM)
+
+  // Conversion tracking
+  convertedJobId  String?        @unique
+  convertedJob    Job?           @relation("EstimateToJob", fields: [convertedJobId], references: [id], onDelete: SetNull)
+
+  // Notes and terms
+  notes           String?        // Internal notes
+  customerNotes   String?        // Notes visible to customer
+  terms           String?        // Terms and conditions
+
+  // Sync metadata
+  syncStatus      SyncStatus     @default(PENDING)
+  lastSyncedAt    DateTime?
+  syncVersion     Int            @default(0)
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Relations
+  workspace       Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  customer        Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  lineItems       EstimateLineItem[]
+
+  @@unique([workspaceId, estimateNumber])
+  @@index([workspaceId, status])
+  @@index([customerId])
+  @@map("estimates")
+}
+
+model EstimateLineItem {
+  id          String   @id @default(uuid())
+  estimateId  String
+
+  description String
+  quantity    Decimal  @db.Decimal(10, 2)
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  total       Decimal  @db.Decimal(10, 2)
+
+  // Optional: reference to service/product catalog
+  serviceType String?  // E.g., 'labor', 'parts', 'materials'
+
+  estimate    Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+
+  @@map("estimate_line_items")
+}
+
+// Inventory / Parts Management
+model Part {
+  id            String   @id @default(uuid())
+  workspaceId   String
+
+  // Part identification
+  sku           String?  // Stock Keeping Unit
+  name          String
+  description   String?
+  category      String?  // E.g., 'HVAC', 'Plumbing', 'Electrical'
+
+  // Pricing
+  unitCost      Decimal  @db.Decimal(10, 2)  // Cost to business
+  unitPrice     Decimal  @db.Decimal(10, 2)  // Price charged to customer
+
+  // Inventory levels
+  quantityOnHand    Int     @default(0)
+  reorderPoint      Int     @default(5)    // Alert when stock falls below
+  reorderQuantity   Int     @default(10)   // Default quantity to reorder
+
+  // Status
+  isActive      Boolean  @default(true)
+
+  // Sync metadata
+  syncStatus    SyncStatus  @default(PENDING)
+  lastSyncedAt  DateTime?
+  syncVersion   Int         @default(0)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  jobParts      JobPart[]
+
+  @@unique([workspaceId, sku])
+  @@index([workspaceId])
+  @@index([workspaceId, category])
+  @@index([workspaceId, name])
+  @@map("parts")
+}
+
+model JobPart {
+  id            String   @id @default(uuid())
+  jobId         String
+  partId        String
+
+  // Usage details
+  quantity      Decimal  @db.Decimal(10, 2) @default(1)
+  unitPrice     Decimal  @db.Decimal(10, 2)  // Price at time of use (snapshot)
+  total         Decimal  @db.Decimal(10, 2)  // quantity * unitPrice
+
+  // Notes
+  notes         String?  // E.g., "Replaced faulty capacitor"
+
+  // Sync metadata
+  syncStatus    SyncStatus  @default(PENDING)
+  lastSyncedAt  DateTime?
+  syncVersion   Int         @default(0)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  job           Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  part          Part     @relation(fields: [partId], references: [id], onDelete: Restrict)
+
+  @@unique([jobId, partId])
+  @@index([jobId])
+  @@index([partId])
+  @@map("job_parts")
+}
+
+// Roles & Permissions (Granular RBAC)
+model Role {
+  id            String   @id @default(uuid())
+  workspaceId   String
+
+  name          String   // E.g., 'Admin', 'Manager', 'Dispatcher', 'Technician', 'Viewer'
+  description   String?
+  isSystem      Boolean  @default(false)  // Built-in roles cannot be deleted
+  isDefault     Boolean  @default(false)  // Auto-assign to new members
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  workspace     Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  permissions   RolePermission[]
+  members       WorkspaceMember[]
+
+  @@unique([workspaceId, name])  // Role names must be unique per workspace
+  @@index([workspaceId])
+  @@map("roles")
+}
+
+model Permission {
+  id            String   @id @default(uuid())
+
+  // Resource and action
+  resource      String   // E.g., 'jobs', 'customers', 'invoices', 'estimates', 'technicians', 'reports', 'settings'
+  action        String   // E.g., 'create', 'read', 'update', 'delete', 'manage', 'assign'
+  description   String?
+
+  createdAt     DateTime @default(now())
+
+  // Relations
+  roles         RolePermission[]
+
+  @@unique([resource, action])
+  @@index([resource])
+  @@map("permissions")
+}
+
+model RolePermission {
+  id            String   @id @default(uuid())
+  roleId        String
+  permissionId  String
+
+  // Optional scope restrictions
+  scope         String?  // E.g., 'own' for only own records, 'team' for team records, null for all
+  conditions    Json?    // Optional JSON conditions for advanced filtering
+
+  createdAt     DateTime @default(now())
+
+  // Relations
+  role          Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission    Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+// Marketing Website Metrics (GitHub Integration)
+model GitHubStars {
+  id            String   @id @default(uuid())
+  numberOfStars Int
+  timestamp     DateTime @default(now())
+
+  @@unique([timestamp])
+  @@index([timestamp])
+  @@map("github_stars")
+}

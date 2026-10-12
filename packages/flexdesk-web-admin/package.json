@@ -1,0 +1,25 @@
+{
+  "name": "@service-flex/web-admin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Main web administration dashboard for Service Flex",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "dev": "tsc --noEmit --watch",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc",
+    "lint": "eslint src --ext .ts,.tsx"
+  },
+  "dependencies": {
+    "@service-flex/core": "workspace:*",
+    "@service-flex/types": "workspace:*",
+    "flexdesk-ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  }
+}

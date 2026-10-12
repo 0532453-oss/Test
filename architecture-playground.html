@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlexDesk — Architecture Playground</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface-2: #1a1a26;
+    --border: #2a2a3a;
+    --border-glow: #3b3b5c;
+    --text: #e4e4ef;
+    --text-dim: #8888a0;
+    --accent: #6c5ce7;
+    --accent-glow: #a29bfe;
+    --green: #00cec9;
+    --green-dim: #00b894;
+    --orange: #e17055;
+    --pink: #fd79a8;
+    --blue: #74b9ff;
+    --yellow: #ffeaa7;
+    --red: #ff6b6b;
+    --cyan: #81ecec;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* ── Animated background ── */
+  .bg-grid {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(108,92,231,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(108,92,231,.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridMove 20s linear infinite;
+  }
+  @keyframes gridMove {
+    0% { background-position: 0 0; }
+    100% { background-position: 60px 60px; }
+  }
+
+  /* ── Header ── */
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,10,15,.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--green));
+    display: grid; place-items: center;
+    font-weight: 900; font-size: 16px; color: #fff;
+  }
+  .logo h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+  .logo h1 span { color: var(--accent-glow); }
+  .header-stats { display: flex; gap: 20px; }
+  .stat { text-align: center; }
+  .stat-val { font-size: 18px; font-weight: 700; color: var(--accent-glow); }
+  .stat-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+
+  /* ── Controls ── */
+  .controls {
+    display: flex; gap: 8px; padding: 12px 32px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    flex-wrap: wrap; position: relative; z-index: 50;
+  }
+  .ctrl-btn {
+    padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--surface-2); color: var(--text-dim); cursor: pointer;
+    font-family: inherit; font-size: 12px; transition: all .2s;
+  }
+  .ctrl-btn:hover { border-color: var(--accent); color: var(--text); }
+  .ctrl-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .ctrl-sep { width: 1px; background: var(--border); margin: 0 4px; }
+
+  /* ── Main canvas ── */
+  .canvas-wrap {
+    position: relative; z-index: 1;
+    padding: 32px;
+    min-height: calc(100vh - 130px);
+    min-width: 1300px;
+    padding-bottom: 800px;
+  }
+
+  /* ── SVG lines layer ── */
+  #lines-svg {
+    position: absolute; top: 0; left: 0;
+    pointer-events: none; z-index: 0;
+    overflow: visible;
+  }
+  #lines-svg line {
+    stroke: var(--border-glow);
+    stroke-width: 1.5;
+    stroke-dasharray: 6 4;
+    opacity: .5;
+    transition: all .4s;
+  }
+  #lines-svg line.highlight {
+    stroke: var(--accent-glow);
+    stroke-width: 2.5;
+    stroke-dasharray: none;
+    opacity: 1;
+    filter: drop-shadow(0 0 6px rgba(108,92,231,.5));
+  }
+
+  /* ── Node cards ── */
+  .node {
+    position: absolute;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    width: 210px;
+    cursor: grab;
+    transition: box-shadow .3s, border-color .3s, transform .15s;
+    z-index: 10;
+    user-select: none;
+  }
+  .node:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(108,92,231,.15);
+    z-index: 20;
+  }
+  .node.selected {
+    border-color: var(--accent-glow);
+    box-shadow: 0 0 30px rgba(108,92,231,.25), inset 0 0 20px rgba(108,92,231,.05);
+    z-index: 30;
+  }
+  .node.dragging { cursor: grabbing; opacity: .9; transition: none; }
+  .node.dim { opacity: .2; transition: opacity .4s; }
+
+  .node-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 8px;
+  }
+  .badge-backend { background: rgba(225,112,85,.15); color: var(--orange); }
+  .badge-frontend { background: rgba(116,185,255,.15); color: var(--blue); }
+  .badge-library { background: rgba(0,206,201,.15); color: var(--green); }
+  .badge-agent { background: rgba(253,121,168,.15); color: var(--pink); }
+  .badge-tool { background: rgba(255,234,167,.15); color: var(--yellow); }
+
+  .node-title {
+    font-size: 13px; font-weight: 700; margin-bottom: 4px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .node-desc { font-size: 10px; color: var(--text-dim); line-height: 1.4; margin-bottom: 8px; }
+
+  .node-tech { display: flex; flex-wrap: wrap; gap: 4px; }
+  .tech-tag {
+    font-size: 9px; padding: 1px 6px; border-radius: 3px;
+    background: rgba(255,255,255,.05); color: var(--text-dim);
+  }
+
+  .node-port {
+    position: absolute; top: 12px; right: 12px;
+    font-size: 10px; color: var(--accent-glow); font-weight: 600;
+  }
+
+  /* ── Detail panel ── */
+  .detail-panel {
+    position: fixed; top: 0; right: -420px; width: 400px; height: 100vh;
+    background: var(--surface); border-left: 1px solid var(--border);
+    z-index: 200; padding: 24px; overflow-y: auto;
+    transition: right .35s cubic-bezier(.4,0,.2,1);
+  }
+  .detail-panel.open { right: 0; }
+  .detail-close {
+    position: absolute; top: 16px; right: 16px;
+    width: 28px; height: 28px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--surface-2);
+    color: var(--text-dim); cursor: pointer; font-size: 14px;
+    display: grid; place-items: center;
+  }
+  .detail-close:hover { border-color: var(--red); color: var(--red); }
+  .detail-panel h2 { font-size: 18px; margin-bottom: 4px; }
+  .detail-panel .detail-type { font-size: 11px; color: var(--accent-glow); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+  .detail-section { margin-bottom: 16px; }
+  .detail-section h3 { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .detail-section p { font-size: 12px; line-height: 1.6; color: var(--text); }
+  .detail-list { list-style: none; }
+  .detail-list li { font-size: 12px; padding: 3px 0; color: var(--text); }
+  .detail-list li::before { content: '→ '; color: var(--accent-glow); }
+  .detail-dep {
+    display: inline-block; padding: 3px 10px; border-radius: 5px;
+    font-size: 11px; margin: 2px; cursor: pointer;
+    background: rgba(108,92,231,.1); color: var(--accent-glow);
+    border: 1px solid rgba(108,92,231,.2); transition: all .2s;
+  }
+  .detail-dep:hover { background: rgba(108,92,231,.2); border-color: var(--accent); }
+
+  /* ── Info bar ── */
+  .info-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(10,10,15,.9); backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+    padding: 8px 32px; display: flex; align-items: center;
+    justify-content: space-between; font-size: 11px; color: var(--text-dim);
+  }
+  .info-bar kbd {
+    display: inline-block; padding: 1px 6px; border-radius: 3px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    font-family: inherit; font-size: 10px; margin: 0 2px;
+  }
+
+  /* ── View modes ── */
+  .canvas-wrap.layers-view .node { transition: all .5s cubic-bezier(.4,0,.2,1); }
+
+  /* ── Tooltip ── */
+  .tooltip {
+    position: fixed; z-index: 300;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 6px 10px;
+    font-size: 11px; color: var(--text); pointer-events: none;
+    opacity: 0; transition: opacity .15s;
+    max-width: 250px;
+  }
+  .tooltip.show { opacity: 1; }
+
+  /* ── Pulse animation for selected ── */
+  @keyframes nodePulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(108,92,231,.2); }
+    50% { box-shadow: 0 0 35px rgba(108,92,231,.35); }
+  }
+  .node.selected { animation: nodePulse 2s ease-in-out infinite; }
+
+  /* ── Minimap ── */
+  .minimap {
+    position: fixed; bottom: 48px; right: 16px; z-index: 90;
+    width: 180px; height: 120px;
+    background: rgba(18,18,26,.9); border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden;
+  }
+  .minimap-dot {
+    position: absolute; width: 6px; height: 4px; border-radius: 1px;
+  }
+  .minimap .minimap-viewport {
+    position: absolute; border: 1px solid var(--accent-glow);
+    border-radius: 2px; opacity: .5;
+  }
+
+  /* ── Search ── */
+  .search-box {
+    padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--surface-2); color: var(--text); font-family: inherit;
+    font-size: 12px; width: 200px; outline: none; transition: border-color .2s;
+  }
+  .search-box:focus { border-color: var(--accent); }
+  .search-box::placeholder { color: var(--text-dim); }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">F</div>
+    <h1>Flex<span>Desk</span> Architecture</h1>
+  </div>
+  <div class="header-stats">
+    <div class="stat"><div class="stat-val">19</div><div class="stat-label">Packages</div></div>
+    <div class="stat"><div class="stat-val">5</div><div class="stat-label">Apps</div></div>
+    <div class="stat"><div class="stat-val">4</div><div class="stat-label">Libraries</div></div>
+    <div class="stat"><div class="stat-val">22</div><div class="stat-label">Modules</div></div>
+  </div>
+</header>
+
+<div class="controls">
+  <input class="search-box" id="search" type="text" placeholder="Search packages...">
+  <div class="ctrl-sep"></div>
+  <button class="ctrl-btn active" data-filter="all">All</button>
+  <button class="ctrl-btn" data-filter="backend">Backend</button>
+  <button class="ctrl-btn" data-filter="frontend">Frontend</button>
+  <button class="ctrl-btn" data-filter="library">Libraries</button>
+  <button class="ctrl-btn" data-filter="agent">Agent</button>
+  <button class="ctrl-btn" data-filter="tool">Tools</button>
+  <div class="ctrl-sep"></div>
+  <button class="ctrl-btn" id="btn-layout-arch">Arch View</button>
+  <button class="ctrl-btn" id="btn-layout-layers">Layer View</button>
+  <button class="ctrl-btn" id="btn-reset">Reset</button>
+</div>
+
+<div class="canvas-wrap" id="canvas">
+  <svg id="lines-svg"></svg>
+</div>
+
+<div class="detail-panel" id="detail-panel">
+  <button class="detail-close" id="detail-close">&times;</button>
+  <div id="detail-content"></div>
+</div>
+
+<div class="minimap" id="minimap"></div>
+
+<div class="info-bar">
+  <span>Drag nodes to rearrange &middot; Click a node for details &middot; <kbd>Esc</kbd> to deselect</span>
+  <span>FlexDesk Monorepo &middot; pnpm + Nx &middot; 19 packages</span>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ── Architecture data ──────────────────────────────────────────────
+const nodes = [
+  {
+    id: 'server', title: 'flexdesk-server', type: 'backend',
+    desc: 'NestJS API — 22 modules, Prisma ORM, multi-tenant RLS',
+    tech: ['NestJS 10', 'Prisma 6', 'PostgreSQL', 'Passport', 'Stripe', 'Twilio'],
+    port: ':3001', deps: [],
+    detail: {
+      purpose: 'Main backend API powering all FlexDesk frontends. Handles auth, jobs, billing, customers, scheduling, invoicing, and more.',
+      modules: ['auth', 'jobs', 'billing', 'customers', 'technician', 'invoices', 'estimates', 'properties', 'parts', 'reports', 'roles', 'workspaces', 'customer-portal', 'maps', 'routing', 'notifications', 'health', 'schedule', 'quotes', 'communication', 'clients', 'object-record'],
+      security: ['Rate limiting (100 req/60s)', 'Body size limit (1MB)', 'Helmet headers', 'Workspace RLS via Prisma extension', 'JWT + Google OAuth'],
+      entry: 'packages/flexdesk-server/src/main.ts'
+    }
+  },
+  {
+    id: 'admin', title: 'flexdesk-admin', type: 'frontend',
+    desc: 'Main admin dashboard — Next.js 16 App Router',
+    tech: ['Next.js 16', 'React 18', 'Radix UI', 'TanStack Query', 'Tailwind 4'],
+    port: ':3000', deps: ['core', 'types', 'utils'],
+    detail: {
+      purpose: 'Primary admin interface for service business owners and dispatchers. Full job management, scheduling, invoicing, and reporting.',
+      features: ['Standalone Docker output', 'CSP security headers', 'Google OAuth avatar', 'React Admin data provider', 'Recharts dashboards'],
+      entry: 'packages/flexdesk-admin/src/app/'
+    }
+  },
+  {
+    id: 'preview-v2', title: 'flexdesk-preview-v2', type: 'frontend',
+    desc: 'Preview admin — Vite + CoreUI + Redux',
+    tech: ['Vite 6', 'React 18', 'CoreUI 5', 'Redux Toolkit', 'Tailwind 4'],
+    port: ':5175', deps: ['core', 'types', 'ui'],
+    detail: {
+      purpose: 'Second-generation preview/demo interface using Vite for fast iteration. Uses CoreUI admin template with Redux state management.',
+      features: ['Hot reload via Vite', 'API proxy to :3001', 'Auto-opens Chrome on Windows', 'CoreUI admin components'],
+      entry: 'packages/flexdesk-preview-v2/src/main.tsx'
+    }
+  },
+  {
+    id: 'preview', title: 'flexdesk-preview', type: 'frontend',
+    desc: 'Legacy preview — Vite + MUI + AG Grid',
+    tech: ['Vite', 'React 18', 'MUI 7', 'AG Grid', 'React Admin'],
+    port: '', deps: ['core', 'types'],
+    detail: {
+      purpose: 'First-generation preview interface. Uses Material UI and AG Grid Enterprise for rich data tables. Predecessor to preview-v2.',
+      features: ['AG Grid Enterprise tables', 'Material UI components', 'React Admin integration'],
+      entry: 'packages/flexdesk-preview/src/'
+    }
+  },
+  {
+    id: 'website', title: 'flexdesk-website', type: 'frontend',
+    desc: 'Marketing site — Next.js 14, Stripe, MDX',
+    tech: ['Next.js 14', 'React 18', 'Emotion', 'Stripe.js', 'Framer Motion'],
+    port: '', deps: [],
+    detail: {
+      purpose: 'Public-facing marketing and landing pages. Supports MDX content, Stripe checkout for subscriptions, and animated UI with Framer Motion.',
+      features: ['MDX content pages', 'Stripe checkout integration', 'Framer Motion animations', 'Tailwind 3 styling'],
+      entry: 'packages/flexdesk-website/app/'
+    }
+  },
+  {
+    id: 'portal', title: 'flexdesk-portal', type: 'frontend',
+    desc: 'Customer self-service portal — Next.js',
+    tech: ['Next.js', 'React 18'],
+    port: ':3002', deps: ['types', 'ui'],
+    detail: {
+      purpose: 'Customer-facing portal for self-service job requests, invoice viewing, and appointment management.',
+      features: ['Minimal footprint', 'Customer auth flow', 'Self-service features'],
+      entry: 'packages/flexdesk-portal/src/app/'
+    }
+  },
+  {
+    id: 'core', title: '@service-flex/core', type: 'library',
+    desc: 'Shared hooks, auth, API client, data providers',
+    tech: ['TypeScript 5.3', 'tsup', 'React hooks'],
+    port: '', deps: ['types'],
+    detail: {
+      purpose: 'Central shared library exporting authentication logic, API client, configuration management, React Admin data providers, and custom React hooks.',
+      exports: ['./auth — Authentication logic', './api — API client utilities', './config — Configuration management', './data-provider — React Admin data providers', './hooks — Custom React hooks'],
+      entry: 'packages/flexdesk-core/src/index.ts'
+    }
+  },
+  {
+    id: 'types', title: '@service-flex/types', type: 'library',
+    desc: 'Shared TypeScript types & entity definitions',
+    tech: ['TypeScript 5.3', 'tsup'],
+    port: '', deps: [],
+    detail: {
+      purpose: 'Pure type definitions shared across the entire monorepo. Zero runtime dependencies. Defines all business entity types and auth types.',
+      exports: ['./entities — Business entity types (Job, Customer, Invoice, etc.)', './auth — Authentication types (JWT payload, roles, etc.)'],
+      entry: 'packages/flexdesk-types/src/index.ts'
+    }
+  },
+  {
+    id: 'ui', title: 'flexdesk-ui', type: 'library',
+    desc: 'Reusable UI components — calendar, inputs, layouts',
+    tech: ['React 18/19', 'Schedule-X 4', 'Vitest'],
+    port: '', deps: ['types'],
+    detail: {
+      purpose: 'Shared UI component library with primitives, patterns, domain components, layouts, and a Schedule-X calendar integration.',
+      exports: ['./primitives — Base UI primitives', './patterns — Common UI patterns', './domain — Domain-specific components', './layouts — Layout components', './calendar — Schedule-X calendar integration'],
+      entry: 'packages/flexdesk-ui/src/'
+    }
+  },
+  {
+    id: 'utils', title: 'flexdesk-utils', type: 'library',
+    desc: 'Pure utility functions — date, format, validation',
+    tech: ['TypeScript 5.3', 'tsup'],
+    port: '', deps: [],
+    detail: {
+      purpose: 'Pure utility functions with zero React dependency. Date formatting, string manipulation, and validation helpers.',
+      exports: ['./date — Date utilities', './format — Formatting functions', './validation — Validation utilities', './string — String manipulation'],
+      entry: 'packages/flexdesk-utils/src/'
+    }
+  },
+  {
+    id: 'agent', title: '@flexdesk/agent', type: 'agent',
+    desc: 'AI agent — Twilio calls/SMS, calendar, CRM sync',
+    tech: ['TypeScript', 'Twilio', 'Google Calendar', 'Airtable', 'Zod'],
+    port: '', deps: [],
+    detail: {
+      purpose: '24/7 AI agent for service businesses. Handles customer texts and calls, auto-books appointments, syncs with CRM, sends daily briefs and follow-ups.',
+      features: ['Twilio voice & SMS', 'Google Calendar sync', 'Airtable CRM integration', 'HVAC industry prompts', 'Conversation memory', 'Daily brief templates'],
+      entry: 'packages/flexdesk-agent/src/index.ts'
+    }
+  },
+  {
+    id: 'web-admin', title: '@service-flex/web-admin', type: 'tool',
+    desc: 'Web admin composition layer',
+    tech: ['TypeScript 5'],
+    port: '', deps: ['core', 'types', 'ui'],
+    detail: {
+      purpose: 'Composition and orchestration layer for the web admin experience. Brings together core, types, and UI into a unified admin interface layer.',
+      entry: 'packages/flexdesk-web-admin/'
+    }
+  },
+  {
+    id: 'analytics', title: '@service-flex/analytics', type: 'tool',
+    desc: 'Analytics & event tracking (stub)',
+    tech: ['TypeScript'],
+    port: '', deps: [],
+    detail: {
+      purpose: 'Analytics and event tracking service. Currently a stub package awaiting implementation.',
+      entry: 'packages/flexdesk-analytics/'
+    }
+  },
+  {
+    id: 'create-app', title: 'create-flexdesk-app', type: 'tool',
+    desc: 'CLI scaffolding tool (stub)',
+    tech: ['TypeScript'],
+    port: '', deps: [],
+    detail: {
+      purpose: 'CLI tool for scaffolding new FlexDesk applications. Currently a stub package awaiting implementation.',
+      entry: 'packages/create-flexdesk-app/'
+    }
+  }
+];
+
+// ── Layout positions ──────────────────────────────────────────────
+const archLayout = {
+  // Backend (bottom center)
+  'server':     { x: 480, y: 580 },
+  // Frontends (top row)
+  'admin':      { x: 100, y: 40 },
+  'preview-v2': { x: 360, y: 40 },
+  'preview':    { x: 620, y: 40 },
+  'website':    { x: 880, y: 40 },
+  'portal':     { x: 1050, y: 150 },
+  // Libraries (middle row)
+  'core':       { x: 200, y: 300 },
+  'types':      { x: 460, y: 300 },
+  'ui':         { x: 720, y: 300 },
+  'utils':      { x: 100, y: 440 },
+  // Agent (right)
+  'agent':      { x: 900, y: 500 },
+  // Tools (bottom right)
+  'web-admin':  { x: 880, y: 300 },
+  'analytics':  { x: 780, y: 580 },
+  'create-app': { x: 1000, y: 620 },
+};
+
+const layerLayout = {
+  // Layer 0 — Frontends
+  'admin':      { x: 50,  y: 40 },
+  'preview-v2': { x: 280, y: 40 },
+  'preview':    { x: 510, y: 40 },
+  'website':    { x: 740, y: 40 },
+  'portal':     { x: 970, y: 40 },
+  // Layer 1 — Shared libs
+  'core':       { x: 130, y: 240 },
+  'ui':         { x: 420, y: 240 },
+  'utils':      { x: 700, y: 240 },
+  'types':      { x: 420, y: 420 },
+  // Layer 2 — Backend
+  'server':     { x: 400, y: 600 },
+  // Side
+  'agent':      { x: 900, y: 350 },
+  'web-admin':  { x: 900, y: 200 },
+  'analytics':  { x: 700, y: 420 },
+  'create-app': { x: 900, y: 500 },
+};
+
+// ── State ─────────────────────────────────────────────────────────
+let selected = null;
+let dragging = null;
+let dragOffset = { x: 0, y: 0 };
+let currentPositions = {};
+let currentFilter = 'all';
+
+// ── Init ──────────────────────────────────────────────────────────
+const canvas = document.getElementById('canvas');
+const svg = document.getElementById('lines-svg');
+const detailPanel = document.getElementById('detail-panel');
+const tooltip = document.getElementById('tooltip');
+const minimap = document.getElementById('minimap');
+
+function init() {
+  // Deep clone arch layout as starting positions
+  for (const [id, pos] of Object.entries(archLayout)) {
+    currentPositions[id] = { ...pos };
+  }
+  createNodes();
+  // Defer line drawing so DOM has computed node dimensions
+  requestAnimationFrame(() => {
+    drawLines();
+    updateMinimap();
+  });
+}
+
+function createNodes() {
+  nodes.forEach(n => {
+    const el = document.createElement('div');
+    el.className = 'node';
+    el.dataset.id = n.id;
+    el.dataset.type = n.type;
+    el.style.left = currentPositions[n.id].x + 'px';
+    el.style.top = currentPositions[n.id].y + 'px';
+
+    const badgeClass = {
+      backend: 'badge-backend', frontend: 'badge-frontend',
+      library: 'badge-library', agent: 'badge-agent', tool: 'badge-tool'
+    }[n.type];
+
+    el.innerHTML = `
+      <span class="node-badge ${badgeClass}">${n.type}</span>
+      ${n.port ? `<span class="node-port">${n.port}</span>` : ''}
+      <div class="node-title">${n.title}</div>
+      <div class="node-desc">${n.desc}</div>
+      <div class="node-tech">
+        ${n.tech.map(t => `<span class="tech-tag">${t}</span>`).join('')}
+      </div>
+    `;
+
+    // Events
+    el.addEventListener('mousedown', e => startDrag(e, n.id));
+    el.addEventListener('click', e => {
+      if (!el.classList.contains('was-dragged')) selectNode(n.id);
+    });
+    el.addEventListener('mouseenter', () => highlightDeps(n.id));
+    el.addEventListener('mouseleave', () => clearHighlights());
+
+    canvas.appendChild(el);
+  });
+}
+
+// ── Drag logic ────────────────────────────────────────────────────
+function getCanvasOffset() {
+  const rect = canvas.getBoundingClientRect();
+  return { x: rect.left + window.scrollX, y: rect.top + window.scrollY };
+}
+
+function startDrag(e, id) {
+  if (e.button !== 0) return;
+  dragging = id;
+  const el = getNodeEl(id);
+  el.classList.add('dragging');
+  el.classList.remove('was-dragged');
+  const canvasOff = getCanvasOffset();
+  dragOffset.x = (e.pageX - canvasOff.x) - currentPositions[id].x;
+  dragOffset.y = (e.pageY - canvasOff.y) - currentPositions[id].y;
+  e.preventDefault();
+}
+
+document.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  const el = getNodeEl(dragging);
+  el.classList.add('was-dragged');
+  const canvasOff = getCanvasOffset();
+  currentPositions[dragging].x = (e.pageX - canvasOff.x) - dragOffset.x;
+  currentPositions[dragging].y = (e.pageY - canvasOff.y) - dragOffset.y;
+  el.style.left = currentPositions[dragging].x + 'px';
+  el.style.top = currentPositions[dragging].y + 'px';
+  drawLines();
+  updateMinimap();
+});
+
+document.addEventListener('mouseup', () => {
+  if (dragging) {
+    const el = getNodeEl(dragging);
+    el.classList.remove('dragging');
+    setTimeout(() => el.classList.remove('was-dragged'), 50);
+    dragging = null;
+  }
+});
+
+// ── Selection ─────────────────────────────────────────────────────
+function selectNode(id) {
+  if (selected === id) {
+    deselectAll();
+    return;
+  }
+  deselectAll();
+  selected = id;
+  getNodeEl(id).classList.add('selected');
+  showDetail(id);
+  highlightDeps(id);
+}
+
+function deselectAll() {
+  selected = null;
+  document.querySelectorAll('.node').forEach(el => {
+    el.classList.remove('selected', 'dim');
+  });
+  detailPanel.classList.remove('open');
+  clearHighlights();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') deselectAll();
+});
+
+// ── Dependency highlighting ───────────────────────────────────────
+function highlightDeps(id) {
+  const node = nodes.find(n => n.id === id);
+  if (!node) return;
+
+  const connected = new Set([id, ...node.deps]);
+  // Also find nodes that depend on this node
+  nodes.forEach(n => {
+    if (n.deps.includes(id)) connected.add(n.id);
+  });
+
+  if (!selected) {
+    document.querySelectorAll('.node').forEach(el => {
+      if (!connected.has(el.dataset.id)) el.classList.add('dim');
+      else el.classList.remove('dim');
+    });
+  }
+
+  // Highlight SVG lines
+  svg.querySelectorAll('line').forEach(line => {
+    const from = line.dataset.from;
+    const to = line.dataset.to;
+    if ((from === id || to === id)) {
+      line.classList.add('highlight');
+    }
+  });
+}
+
+function clearHighlights() {
+  if (selected) return; // Keep highlights if something is selected
+  document.querySelectorAll('.node').forEach(el => el.classList.remove('dim'));
+  svg.querySelectorAll('line').forEach(l => l.classList.remove('highlight'));
+}
+
+// ── Draw dependency lines ─────────────────────────────────────────
+function getNodeCenter(id) {
+  const el = getNodeEl(id);
+  if (!el) return null;
+  const pos = currentPositions[id];
+  return { x: pos.x + el.offsetWidth / 2, y: pos.y + el.offsetHeight / 2 };
+}
+
+function drawLines() {
+  svg.innerHTML = '';
+
+  // Size SVG to cover all nodes
+  let maxX = 0, maxY = 0;
+  for (const id in currentPositions) {
+    const el = getNodeEl(id);
+    if (!el) continue;
+    maxX = Math.max(maxX, currentPositions[id].x + el.offsetWidth + 50);
+    maxY = Math.max(maxY, currentPositions[id].y + el.offsetHeight + 50);
+  }
+  svg.setAttribute('width', maxX);
+  svg.setAttribute('height', maxY);
+
+  nodes.forEach(n => {
+    n.deps.forEach(depId => {
+      const from = getNodeCenter(n.id);
+      const to = getNodeCenter(depId);
+      if (!from || !to) return;
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', from.x);
+      line.setAttribute('y1', from.y);
+      line.setAttribute('x2', to.x);
+      line.setAttribute('y2', to.y);
+      line.dataset.from = n.id;
+      line.dataset.to = depId;
+      svg.appendChild(line);
+    });
+  });
+}
+
+// ── Detail panel ──────────────────────────────────────────────────
+function showDetail(id) {
+  const n = nodes.find(n => n.id === id);
+  if (!n) return;
+  const d = n.detail || {};
+
+  let html = `
+    <h2>${n.title}</h2>
+    <div class="detail-type">${n.type}${n.port ? ' · ' + n.port : ''}</div>
+  `;
+
+  if (d.purpose) {
+    html += `<div class="detail-section"><h3>Purpose</h3><p>${d.purpose}</p></div>`;
+  }
+
+  if (d.entry) {
+    html += `<div class="detail-section"><h3>Entry Point</h3><p style="color:var(--green);font-size:12px">${d.entry}</p></div>`;
+  }
+
+  if (n.deps.length) {
+    html += `<div class="detail-section"><h3>Depends On</h3><div>`;
+    n.deps.forEach(dep => {
+      const depNode = nodes.find(nd => nd.id === dep);
+      html += `<span class="detail-dep" onclick="selectNode('${dep}')">${depNode ? depNode.title : dep}</span>`;
+    });
+    html += `</div></div>`;
+  }
+
+  // Who depends on this?
+  const dependents = nodes.filter(nd => nd.deps.includes(id));
+  if (dependents.length) {
+    html += `<div class="detail-section"><h3>Used By</h3><div>`;
+    dependents.forEach(dep => {
+      html += `<span class="detail-dep" onclick="selectNode('${dep.id}')">${dep.title}</span>`;
+    });
+    html += `</div></div>`;
+  }
+
+  if (d.modules) {
+    html += `<div class="detail-section"><h3>Modules (${d.modules.length})</h3><ul class="detail-list">`;
+    d.modules.forEach(m => { html += `<li>${m}</li>`; });
+    html += `</ul></div>`;
+  }
+
+  if (d.exports) {
+    html += `<div class="detail-section"><h3>Exports</h3><ul class="detail-list">`;
+    d.exports.forEach(m => { html += `<li>${m}</li>`; });
+    html += `</ul></div>`;
+  }
+
+  if (d.features) {
+    html += `<div class="detail-section"><h3>Features</h3><ul class="detail-list">`;
+    d.features.forEach(m => { html += `<li>${m}</li>`; });
+    html += `</ul></div>`;
+  }
+
+  if (d.security) {
+    html += `<div class="detail-section"><h3>Security</h3><ul class="detail-list">`;
+    d.security.forEach(m => { html += `<li>${m}</li>`; });
+    html += `</ul></div>`;
+  }
+
+  html += `<div class="detail-section"><h3>Tech Stack</h3><div class="node-tech" style="gap:6px">`;
+  n.tech.forEach(t => { html += `<span class="tech-tag" style="font-size:11px;padding:3px 8px">${t}</span>`; });
+  html += `</div></div>`;
+
+  document.getElementById('detail-content').innerHTML = html;
+  detailPanel.classList.add('open');
+}
+
+document.getElementById('detail-close').addEventListener('click', deselectAll);
+
+// ── Filter controls ───────────────────────────────────────────────
+document.querySelectorAll('[data-filter]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    applyFilter();
+  });
+});
+
+function applyFilter() {
+  document.querySelectorAll('.node').forEach(el => {
+    if (currentFilter === 'all' || el.dataset.type === currentFilter) {
+      el.style.display = '';
+    } else {
+      el.style.display = 'none';
+    }
+  });
+  drawLines();
+}
+
+// ── Search ────────────────────────────────────────────────────────
+document.getElementById('search').addEventListener('input', e => {
+  const q = e.target.value.toLowerCase();
+  document.querySelectorAll('.node').forEach(el => {
+    const n = nodes.find(n => n.id === el.dataset.id);
+    const match = !q || n.title.toLowerCase().includes(q) ||
+      n.desc.toLowerCase().includes(q) ||
+      n.tech.some(t => t.toLowerCase().includes(q));
+    el.style.display = match ? '' : 'none';
+  });
+});
+
+// ── Layout switches ───────────────────────────────────────────────
+document.getElementById('btn-layout-arch').addEventListener('click', () => animateToLayout(archLayout));
+document.getElementById('btn-layout-layers').addEventListener('click', () => animateToLayout(layerLayout));
+document.getElementById('btn-reset').addEventListener('click', () => {
+  animateToLayout(archLayout);
+  deselectAll();
+  currentFilter = 'all';
+  document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+  document.querySelector('[data-filter="all"]').classList.add('active');
+  document.querySelectorAll('.node').forEach(el => el.style.display = '');
+  document.getElementById('search').value = '';
+});
+
+function animateToLayout(layout) {
+  const duration = 500;
+  const start = performance.now();
+  const from = {};
+  for (const id in layout) {
+    from[id] = { ...currentPositions[id] };
+  }
+
+  function frame(time) {
+    const t = Math.min((time - start) / duration, 1);
+    const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+    for (const id in layout) {
+      currentPositions[id].x = from[id].x + (layout[id].x - from[id].x) * ease;
+      currentPositions[id].y = from[id].y + (layout[id].y - from[id].y) * ease;
+      const el = getNodeEl(id);
+      if (el) {
+        el.style.left = currentPositions[id].x + 'px';
+        el.style.top = currentPositions[id].y + 'px';
+      }
+    }
+    drawLines();
+    updateMinimap();
+    if (t < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+// ── Minimap ───────────────────────────────────────────────────────
+function updateMinimap() {
+  minimap.innerHTML = '';
+  const scale = 0.12;
+  const colors = {
+    backend: 'var(--orange)', frontend: 'var(--blue)',
+    library: 'var(--green)', agent: 'var(--pink)', tool: 'var(--yellow)'
+  };
+  nodes.forEach(n => {
+    const pos = currentPositions[n.id];
+    if (!pos) return;
+    const dot = document.createElement('div');
+    dot.className = 'minimap-dot';
+    dot.style.left = (pos.x * scale + 8) + 'px';
+    dot.style.top = (pos.y * scale + 8) + 'px';
+    dot.style.background = colors[n.type] || '#fff';
+    minimap.appendChild(dot);
+  });
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
+function getNodeEl(id) {
+  return document.querySelector(`.node[data-id="${id}"]`);
+}
+
+// ── Boot ──────────────────────────────────────────────────────────
+init();
+</script>
+
+</body>
+</html>

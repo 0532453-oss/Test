@@ -1,0 +1,63 @@
+# Large analysis files
+*-analysis.md
+twenty-analysis.md
+twenty-folders-only.md
+twenty-core-structure.md
+
+# Environment files — never commit secrets
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Node modules
+node_modules/
+
+# Build output
+dist/
+build/
+.next/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Nx cache and workspace data
+.nx/
+
+# Redundant lock file (this is a pnpm workspace)
+package-lock.json
+
+# IDE / AI tool configs
+.cursor/
+.ralphy/
+
+# Database files
+*.sqlite
+*.db
+*.db-shm
+*.db-wal
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Coverage
+coverage/
+
+# Logs
+*.log
+
+# Windows special files
+nul
+.vercel
